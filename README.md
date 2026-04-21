@@ -30,6 +30,11 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.5.2 (2026-04-21)
+**New Features:**
+- COPY ALL WEEKS button — copies a paragraph-per-week work log of every week with data to the clipboard
+- Each week is labeled with its number, year, and date range, followed by the AI-generated narrative
+
 ### v0.5.1 (2026-04-21)
 **New Features:**
 - Past Weeks dropdown next to the Week # input — lists every prior week with data (e.g. "Week 14, 2026 (Apr 6 – Apr 12) — 15 tasks")

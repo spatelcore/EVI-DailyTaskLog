@@ -529,6 +529,7 @@
     <button class="btn btn-blue" onclick="recallByWeek()">By This Week</button>
     <button class="btn btn-blue" onclick="recallAll()">All Records</button>
     <button class="btn btn-save" onclick="showWeeklySummary()" style="margin-left:4px;">WEEKLY SUMMARY</button>
+    <button class="btn btn-save" onclick="copyAllWeeksLog()" style="margin-left:4px;" title="Copy a paragraph-per-week work log of every week with data">COPY ALL WEEKS</button>
     <button class="btn btn-export" onclick="exportCSV()" style="margin-left:4px;">EXPORT CSV</button>
     <button class="btn btn-export" onclick="exportJSON()" style="margin-left:4px;">EXPORT JSON</button>
     <button class="btn btn-blue" onclick="$('importFile').click()" style="margin-left:4px;">IMPORT JSON</button>
@@ -1807,6 +1808,46 @@ function jumpToWeekSummary() {
   showWeeklySummary();
 }
 
+function buildAllWeeksWorkLog() {
+  const tasks = fetchTasksByMode("all");
+  if (!tasks.length) return "";
+  const daysOrder = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+  const groups = {};
+  tasks.forEach(t => {
+    if (!t.year || !t.week_number) return;
+    const key = t.year + "-" + String(t.week_number).padStart(2, "0");
+    if (!groups[key]) groups[key] = { year: t.year, week: t.week_number, tasks: [] };
+    groups[key].tasks.push(t);
+  });
+  const entries = Object.values(groups).sort((a,b) => b.year - a.year || b.week - a.week);
+  const fmt = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const paragraphs = entries.map(g => {
+    const byDay = {};
+    g.tasks.forEach(t => { (byDay[t.day_name] = byDay[t.day_name] || []).push(t); });
+    const daysSorted = daysOrder.filter(d => byDay[d]).map(d => ({ day: d, date: byDay[d][0].entry_date, tasks: byDay[d] }));
+    const locCounts = {};
+    g.tasks.forEach(t => { const l = t.location || "Unknown"; locCounts[l] = (locCounts[l]||0)+1; });
+    const dates = [...new Set(g.tasks.map(t => t.entry_date))].sort();
+    const dateRange = dates.length ? dates[0] + " to " + dates[dates.length-1] : "";
+    const ai = generateAISummary(g.tasks, daysSorted, locCounts, dateRange);
+    const r = weekDateRange(g.year, g.week);
+    const header = "Week " + g.week + ", " + g.year + " (" + fmt(r.start) + " – " + fmt(r.end) + ")";
+    return header + "\n" + ai;
+  });
+  return paragraphs.join("\n\n");
+}
+
+function copyAllWeeksLog() {
+  const text = buildAllWeeksWorkLog();
+  if (!text) { toast("No records to summarize.", "error"); return; }
+  const done = () => toast("Copied work log for all weeks.", "success");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
 function closeSummary() { $("summaryModal").classList.remove("open"); }
 
 // Close modals on overlay click
@@ -1986,8 +2027,12 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v0.5.1";
+const CURRENT_VERSION = "v0.5.2";
 const VERSION_HISTORY = [
+  { version: "v0.5.2", date: "2026-04-21", features: [
+      "COPY ALL WEEKS button — copies a paragraph-per-week work log of every week with data to the clipboard",
+      "Each week is labeled with its number, year, and date range, followed by the AI-generated narrative"
+  ]},
   { version: "v0.5.1", date: "2026-04-21", features: [
       "Past Weeks dropdown next to the Week # input — lists every prior week with data (e.g. \"Week 14, 2026 (Apr 6 – Apr 12) — 15 tasks\")",
       "Selecting a week auto-fills Week #/Year and opens the Weekly Summary for that week"
