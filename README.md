@@ -30,6 +30,10 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.5.5 (2026-04-21)
+**Design:**
+- View tabs (All Records / Weekly View) now have a glossy mirror finish — layered gradients, inner highlight and shadow, and a shine sweep that animates across on hover
+
 ### v0.5.4 (2026-04-21)
 **Bug Fixes:**
 - Fixed: week number was off by one for Monday dates after DST spring-forward (e.g., 2026-04-20 was filed under Week 15 instead of Week 16) — `getWeekNumber()` used raw millisecond arithmetic that lost an hour across the DST boundary
