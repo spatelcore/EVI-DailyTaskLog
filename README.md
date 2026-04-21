@@ -30,6 +30,10 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.5.3 (2026-04-21)
+**Bug Fixes:**
+- Fixed: version badge in the top-left corner was hardcoded to v0.5.0; it now renders from `CURRENT_VERSION` so future bumps update automatically
+
 ### v0.5.2 (2026-04-21)
 **New Features:**
 - COPY ALL WEEKS button — copies a paragraph-per-week work log of every week with data to the clipboard

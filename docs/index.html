@@ -881,7 +881,7 @@
 </div>
 
 <!-- Version Label -->
-<button type="button" class="version-label" onclick="openVersionHistory()" title="Click to view version history"><span class="alpha-badge">Beta</span> v0.5.0</button>
+<button type="button" class="version-label" onclick="openVersionHistory()" title="Click to view version history"><span class="alpha-badge">Beta</span> <span id="versionBadgeText"></span></button>
 
 <!-- Toast notification -->
 <div class="toast" id="toast"></div>
@@ -2027,8 +2027,11 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v0.5.2";
+const CURRENT_VERSION = "v0.5.3";
 const VERSION_HISTORY = [
+  { version: "v0.5.3", date: "2026-04-21", fixes: [
+      "Fixed: version badge in the top-left corner was hardcoded to v0.5.0; it now renders from CURRENT_VERSION so future bumps update automatically"
+  ]},
   { version: "v0.5.2", date: "2026-04-21", features: [
       "COPY ALL WEEKS button — copies a paragraph-per-week work log of every week with data to the clipboard",
       "Each week is labeled with its number, year, and date range, followed by the AI-generated narrative"
@@ -2496,6 +2499,7 @@ document.addEventListener("click", function(e) {
 })();
 
 init();
+{ const vb = $("versionBadgeText"); if (vb) vb.textContent = CURRENT_VERSION; }
 </script>
 </body>
 </html>
