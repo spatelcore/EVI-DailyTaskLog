@@ -30,6 +30,23 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.6.0 (2026-04-21)
+**Design — complete UI remake (Design v2):**
+- System font stack, tighter typography, soft radial background gradients in the active theme
+- Glass-morphism sticky banner with gradient + subtle inset highlight, rounded-square settings button with blur
+- Frosted-glass cards (Select Date, Task Details) with hairline borders, layered drop shadows, and an accent bar on each title
+- Location pills redesigned as rounded chips with gradient fill when selected
+- Buttons redone with subtle linear gradients, inner highlight/shadow, focus ring, and hover lift
+- Stats dashboard: accent bar on left of each card, bolder display numerals, adaptive number color so dark themes stay readable
+- Frosted sticky RECALL toolbar; record count as a pill badge with live dot
+- Table: uppercase letter-spaced column headers, softer zebra rows, blue-tinted hover
+- Modals: backdrop blur, larger radius, gradient header, rotate-on-hover close button
+- AI Summary card, day sections, and summary stat cards refined with layered shadows and gradient accents
+- Glass toast pill, pill-shaped version badge, custom thin scrollbars
+- Gentle fade-in on load that respects `prefers-reduced-motion`
+
+Implemented as a single `<style id="design-v2">` block appended after the base stylesheet — delete it to revert to the previous look without losing any functionality.
+
 ### v0.5.5 (2026-04-21)
 **Design:**
 - View tabs (All Records / Weekly View) now have a glossy mirror finish — layered gradients, inner highlight and shadow, and a shine sweep that animates across on hover
