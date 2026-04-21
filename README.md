@@ -30,6 +30,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.5.4 (2026-04-21)
+**Bug Fixes:**
+- Fixed: week number was off by one for Monday dates after DST spring-forward (e.g., 2026-04-20 was filed under Week 15 instead of Week 16) — `getWeekNumber()` used raw millisecond arithmetic that lost an hour across the DST boundary
+- Now computes week from day-of-year using UTC arithmetic, which is DST-immune
+- Added a one-time repair pass on load that recomputes `week_number` / `year` for every record from its `entry_date`, with a toast showing how many records were fixed
+
 ### v0.5.3 (2026-04-21)
 **Bug Fixes:**
 - Fixed: version badge in the top-left corner was hardcoded to v0.5.0; it now renders from `CURRENT_VERSION` so future bumps update automatically
