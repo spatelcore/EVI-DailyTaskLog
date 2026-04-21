@@ -30,6 +30,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.6.3 (2026-04-21)
+**New Features:**
+- Weekly AI summary now lists actual task descriptions day-by-day, not just counts — e.g., "Monday (2026-04-20) — patch panel install; rack audit; cable cleanup"
+- Up to 6 task names per day shown, with "+N more" overflow; long descriptions truncated at 120 chars
+- Summary box now honors newlines (`white-space: pre-wrap`) so the day-by-day list is readable
+
 ### v0.6.2 (2026-04-21)
 **Design:**
 - New cohesive button palette (theme-independent): save/primary → emerald, blue → indigo, clear → amber, delete → rose, export → slate

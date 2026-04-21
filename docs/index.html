@@ -824,6 +824,7 @@
       linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
     box-shadow: var(--shadow-2), inset 0 1px 0 rgba(255,255,255,0.12);
     line-height: 1.75; font-size: 14.5px;
+    white-space: pre-wrap;
   }
   .ai-summary-box::before {
     top: -12px; padding: 4px 14px; border-radius: 999px; font-size: 10px;
@@ -2247,11 +2248,7 @@ function generateAISummary(tasks, daysSorted, locCounts, dateRange) {
       + (topLoc[1] !== 1 ? "s" : "") + " (" + pct + "% of total), followed by " + others + ".");
   }
 
-  if (categories.length) sentences.push("Key activities included " + categories.slice(0,3).join(", ") + ".");
-  else {
-    const highlights = [...new Set(tasks.slice(0,3).map(t => (t.description||"").slice(0,60)))];
-    if (highlights.length) sentences.push("Notable tasks: " + highlights.join("; ") + ".");
-  }
+  if (categories.length) sentences.push("Key activity themes: " + categories.slice(0,4).join(", ") + ".");
 
   if (numDays > 1) {
     sentences.push("The busiest day was " + busiestDay.day + " (" + busiestDay.date + ") with "
@@ -2262,6 +2259,23 @@ function generateAISummary(tasks, daysSorted, locCounts, dateRange) {
   const load = avg >= 5 ? "a high-intensity" : avg >= 3 ? "a moderate" : avg >= 1.5 ? "a steady" : "a light";
   sentences.push("Overall workload was " + load + " week with an average of " + avg + " task" + (avg !== 1 ? "s" : "") + " per day.");
 
+  // Day-by-day activity list with actual task descriptions
+  const cleanDesc = s => {
+    const t = (s || "").replace(/\s+/g, " ").trim();
+    return t.length > 120 ? t.slice(0, 117) + "…" : t;
+  };
+  const perDay = daysSorted.map(d => {
+    const names = d.tasks.map(t => cleanDesc(t.description)).filter(Boolean);
+    if (!names.length) return null;
+    const list = names.length <= 6
+      ? names.join("; ")
+      : names.slice(0, 6).join("; ") + "; +" + (names.length - 6) + " more";
+    return d.day + " (" + d.date + ") — " + list;
+  }).filter(Boolean);
+  if (perDay.length) {
+    const heading = "\n\nActivities logged by day:\n• " + perDay.join("\n• ");
+    return sentences.join(" ") + heading;
+  }
   return sentences.join(" ");
 }
 
@@ -2536,8 +2550,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v0.6.2";
+const CURRENT_VERSION = "v0.6.3";
 const VERSION_HISTORY = [
+  { version: "v0.6.3", date: "2026-04-21", features: [
+      "Weekly AI summary now lists actual task descriptions day-by-day, not just counts — e.g., \"Monday (2026-04-20) — patch panel install; rack audit; cable cleanup\"",
+      "Up to 6 task names per day shown, with \"+N more\" overflow; long descriptions truncated at 120 chars",
+      "Summary box now honors newlines (white-space: pre-wrap) so the day-by-day list is readable"
+  ]},
   { version: "v0.6.2", date: "2026-04-21", features: [
       "New cohesive button palette (theme-independent): save/primary → emerald, blue → indigo, clear → amber, delete → rose, export → slate",
       "Row-action buttons (edit / delete / duplicate) updated to match the new palette"
