@@ -626,11 +626,17 @@
   .btn:hover { transform: translateY(-1px); filter: brightness(1.04); box-shadow: var(--shadow-2), inset 0 1px 0 rgba(255,255,255,0.25); opacity: 1; }
   .btn:active { transform: translateY(0); filter: brightness(0.97); }
   .btn:focus-visible { outline: none; box-shadow: var(--shadow-1), var(--ring); }
-  .btn-save   { background: linear-gradient(135deg, var(--green), color-mix(in srgb, var(--green) 70%, #000)); }
-  .btn-blue   { background: linear-gradient(135deg, var(--blue), color-mix(in srgb, var(--blue) 70%, #000)); }
-  .btn-clear  { background: linear-gradient(135deg, var(--orange), color-mix(in srgb, var(--orange) 70%, #000)); }
-  .btn-delete { background: linear-gradient(135deg, var(--red), color-mix(in srgb, var(--red) 70%, #000)); }
-  .btn-export { background: linear-gradient(135deg, var(--navy), color-mix(in srgb, var(--navy) 60%, #000)); }
+  /* New button palette — cohesive, modern, theme-independent */
+  .btn-save   { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; }
+  .btn-blue   { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color:#fff; }
+  .btn-clear  { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:#fff; }
+  .btn-delete { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color:#fff; }
+  .btn-export { background: linear-gradient(135deg, #64748b 0%, #334155 100%); color:#fff; }
+
+  /* Row-action buttons follow the same palette */
+  .act-edit { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color:#fff; }
+  .act-del  { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color:#fff; }
+  .act-dup  { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:#fff; }
 
   /* ── Status bar ────────────────────────────────────────────────────── */
   .status-bar {
@@ -2530,8 +2536,12 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v0.6.1";
+const CURRENT_VERSION = "v0.6.2";
 const VERSION_HISTORY = [
+  { version: "v0.6.2", date: "2026-04-21", features: [
+      "New cohesive button palette (theme-independent): save/primary → emerald, blue → indigo, clear → amber, delete → rose, export → slate",
+      "Row-action buttons (edit / delete / duplicate) updated to match the new palette"
+  ]},
   { version: "v0.6.1", date: "2026-04-21", features: [
       "TODAY button in the RECALL bar — one click filters the table to every record logged for today, switching to the All Records tab if needed"
   ]},
