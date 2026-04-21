@@ -993,6 +993,7 @@
 
   <div class="recall-bar">
     <span class="recall-label">RECALL</span>
+    <button class="btn btn-save" onclick="recallToday()" title="Show all tasks logged for today">TODAY</button>
     <button class="btn btn-blue" onclick="recallByDate()">By Selected Date</button>
     <button class="btn btn-blue" onclick="recallByWeek()">By This Week</button>
     <button class="btn btn-blue" onclick="recallAll()">All Records</button>
@@ -1928,6 +1929,15 @@ function recallByDate() {
   setStatus("Recall by date: " + d + " — " + rows.length + " found");
 }
 
+function recallToday() {
+  const today = localDateStr();
+  const rows = fetchTasksByMode("date", { date: today });
+  if (activeTab !== "all") switchTab("all");
+  renderTable(rows);
+  $("recordCount").textContent = rows.length + " record(s) for today (" + today + ")";
+  setStatus("Today — " + today + " — " + rows.length + " found");
+}
+
 function recallByWeek() {
   const yr = $("yearNum").value;
   const wk = $("weekNum").value;
@@ -2520,8 +2530,11 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v0.6.0";
+const CURRENT_VERSION = "v0.6.1";
 const VERSION_HISTORY = [
+  { version: "v0.6.1", date: "2026-04-21", features: [
+      "TODAY button in the RECALL bar — one click filters the table to every record logged for today, switching to the All Records tab if needed"
+  ]},
   { version: "v0.6.0", date: "2026-04-21", features: [
       "Complete UI remake — new \"Design v2\" layer applied on top of the base stylesheet",
       "System font stack, tighter typography, soft radial background gradients in the active theme",

@@ -30,6 +30,10 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.6.1 (2026-04-21)
+**New Features:**
+- TODAY button in the RECALL bar — one click filters the table to every record logged for today, switching to the All Records tab if needed
+
 ### v0.6.0 (2026-04-21)
 **Design — complete UI remake (Design v2):**
 - System font stack, tighter typography, soft radial background gradients in the active theme
