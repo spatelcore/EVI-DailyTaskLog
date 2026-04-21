@@ -30,6 +30,11 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v0.5.1 (2026-04-21)
+**New Features:**
+- Past Weeks dropdown next to the Week # input — lists every prior week with data (e.g. "Week 14, 2026 (Apr 6 – Apr 12) — 15 tasks")
+- Selecting a week auto-fills Week #/Year and opens the Weekly Summary for that week
+
 ### v0.5.0 (2026-04-17)
 **New Features:**
 - Attachments — insert images and PDFs into any task for more context

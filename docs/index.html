@@ -537,6 +537,10 @@
     <input type="number" id="weekNum" min="1" max="53">
     <span style="font-weight:bold; color:var(--text);">Year:</span>
     <input type="number" id="yearNum" min="2020" max="2035">
+    <select id="weekJump" onchange="jumpToWeekSummary()" title="Jump to a past week and generate its summary"
+            style="margin-left:8px; padding:6px 10px; font-size:13px; border:1px solid #ccc; border-radius:4px; background:var(--pale); color:var(--navy); font-weight:600;">
+      <option value="">Past Weeks &#9662;</option>
+    </select>
     <span class="record-count" id="recordCount"></span>
   </div>
 
@@ -1757,6 +1761,52 @@ function statCard(value, label, small) {
        + '<div class="stat-label">' + label + '</div></div>';
 }
 
+// ── Past Weeks Jump Dropdown ─────────────────────
+function weekDateRange(year, wk) {
+  const jan1 = new Date(year, 0, 1);
+  const jan1Day = jan1.getDay();
+  const daysToFirstMon = jan1Day === 0 ? 1 : (jan1Day === 1 ? 0 : 8 - jan1Day);
+  const start = new Date(year, 0, 1 + daysToFirstMon + (wk - 1) * 7);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  return { start, end };
+}
+
+function populateWeekJumpDropdown() {
+  const sel = $("weekJump");
+  if (!sel) return;
+  const tasks = fetchTasksByMode("all");
+  const groups = {};
+  tasks.forEach(t => {
+    if (!t.year || !t.week_number) return;
+    const key = t.year + "-" + String(t.week_number).padStart(2, "0");
+    if (!groups[key]) groups[key] = { year: t.year, week: t.week_number, count: 0 };
+    groups[key].count++;
+  });
+  const entries = Object.values(groups).sort((a, b) => b.year - a.year || b.week - a.week);
+  const fmt = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  sel.innerHTML = '<option value="">Past Weeks &#9662;</option>'
+    + entries.map(e => {
+        const r = weekDateRange(e.year, e.week);
+        return '<option value="' + e.year + ':' + e.week + '">'
+             + 'Week ' + e.week + ', ' + e.year + ' ('
+             + fmt(r.start) + ' – ' + fmt(r.end) + ') — '
+             + e.count + ' task' + (e.count !== 1 ? 's' : '')
+             + '</option>';
+    }).join("");
+}
+
+function jumpToWeekSummary() {
+  const sel = $("weekJump");
+  const v = sel.value;
+  if (!v) return;
+  const [yr, wk] = v.split(":");
+  $("yearNum").value = yr;
+  $("weekNum").value = wk;
+  sel.value = "";
+  showWeeklySummary();
+}
+
 function closeSummary() { $("summaryModal").classList.remove("open"); }
 
 // Close modals on overlay click
@@ -1900,6 +1950,7 @@ function updateStats() {
   $("statWeek").textContent = weekRows.length;
   $("statWeekLabel").textContent = "Week " + wk;
   $("statTotal").textContent = allRows.length;
+  populateWeekJumpDropdown();
 }
 
 // ── Keyboard Shortcuts ───────────────────────────
@@ -1935,8 +1986,12 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v0.5.0";
+const CURRENT_VERSION = "v0.5.1";
 const VERSION_HISTORY = [
+  { version: "v0.5.1", date: "2026-04-21", features: [
+      "Past Weeks dropdown next to the Week # input — lists every prior week with data (e.g. \"Week 14, 2026 (Apr 6 – Apr 12) — 15 tasks\")",
+      "Selecting a week auto-fills Week #/Year and opens the Weekly Summary for that week"
+  ]},
   { version: "v0.5.0", date: "2026-04-17", features: [
       "Attachments — insert images and PDFs into any task for more context",
       "Files stored in IndexedDB (separate from task records) so storage scales to many MBs",
