@@ -843,6 +843,32 @@
     border-radius: 999px; padding: 2px 9px;
   }
 
+  /* ── Format picker (export / import) ───────────────────────────────── */
+  .format-choices { display: flex; flex-direction: column; gap: 10px; }
+  .format-choice {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border-radius: var(--r-md);
+    border: 1px solid var(--hairline); background: var(--card-bg);
+    color: var(--text); text-align: left; cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    box-shadow: var(--shadow-1);
+  }
+  .format-choice:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-2);
+    border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+  }
+  .format-choice-badge {
+    width: 54px; height: 54px; flex-shrink: 0; display: flex;
+    align-items: center; justify-content: center; color: #fff;
+    font-size: 12px; font-weight: 800; letter-spacing: 0.06em;
+    border-radius: var(--r-sm); box-shadow: var(--shadow-1),
+      inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+  .format-choice-text { flex: 1; min-width: 0; }
+  .format-choice-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .format-choice-desc { font-size: 12px; opacity: 0.7; }
+
   /* ── Day sections in summary ───────────────────────────────────────── */
   .day-section { border: 1px solid var(--hairline); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-1); }
   .day-header {
@@ -1006,10 +1032,9 @@
     <button class="btn btn-blue" onclick="recallAll()">All Records</button>
     <button class="btn btn-save" onclick="showWeeklySummary()" style="margin-left:4px;">WEEKLY SUMMARY</button>
     <button class="btn btn-save" onclick="copyAllWeeksLog()" style="margin-left:4px;" title="Copy a paragraph-per-week work log of every week with data">COPY ALL WEEKS</button>
-    <button class="btn btn-export" onclick="exportCSV()" style="margin-left:4px;">EXPORT CSV</button>
-    <button class="btn btn-export" onclick="exportJSON()" style="margin-left:4px;">EXPORT JSON</button>
-    <button class="btn btn-blue" onclick="$('importFile').click()" style="margin-left:4px;">IMPORT JSON</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)">
+    <button class="btn btn-export" onclick="openExportPicker()" style="margin-left:4px;">EXPORT</button>
+    <button class="btn btn-blue" onclick="openImportPicker()" style="margin-left:4px;">IMPORT</button>
+    <input type="file" id="importFile" accept=".json,.csv" style="display:none" onchange="onImportFile(this)">
     <span style="margin-left:16px; font-weight:bold; color:var(--text);">Week #:</span>
     <input type="number" id="weekNum" min="1" max="53">
     <span style="font-weight:bold; color:var(--text);">Year:</span>
@@ -1181,6 +1206,77 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-clear" onclick="closeSettings()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Picker Modal -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>EXPORT RECORDS</h2>
+      <button class="modal-close" onclick="closeExportPicker()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0 0 16px; color:var(--text); opacity:0.75; font-size:13px;">Choose a format. CSV and PDF export visible rows from the table; JSON exports the full dataset (including attachments).</p>
+      <div class="format-choices">
+        <button type="button" class="format-choice" onclick="doExport('csv')">
+          <div class="format-choice-badge" style="background:linear-gradient(135deg,#10b981,#059669)">CSV</div>
+          <div class="format-choice-text">
+            <div class="format-choice-title">Spreadsheet (CSV)</div>
+            <div class="format-choice-desc">Open in Excel or Google Sheets</div>
+          </div>
+        </button>
+        <button type="button" class="format-choice" onclick="doExport('json')">
+          <div class="format-choice-badge" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">JSON</div>
+          <div class="format-choice-text">
+            <div class="format-choice-title">Full Backup (JSON)</div>
+            <div class="format-choice-desc">Complete data for re-import on another device</div>
+          </div>
+        </button>
+        <button type="button" class="format-choice" onclick="doExport('pdf')">
+          <div class="format-choice-badge" style="background:linear-gradient(135deg,#f43f5e,#e11d48)">PDF</div>
+          <div class="format-choice-text">
+            <div class="format-choice-title">Printable Report (PDF)</div>
+            <div class="format-choice-desc">Opens print dialog — choose "Save as PDF"</div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-clear" onclick="closeExportPicker()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Picker Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>IMPORT RECORDS</h2>
+      <button class="modal-close" onclick="closeImportPicker()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0 0 16px; color:var(--text); opacity:0.75; font-size:13px;">Pick a format, then choose the file. Imported rows are appended to your existing records.</p>
+      <div class="format-choices">
+        <button type="button" class="format-choice" onclick="pickImportFormat('json')">
+          <div class="format-choice-badge" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">JSON</div>
+          <div class="format-choice-text">
+            <div class="format-choice-title">Full Backup (JSON)</div>
+            <div class="format-choice-desc">Previously exported from this app</div>
+          </div>
+        </button>
+        <button type="button" class="format-choice" onclick="pickImportFormat('csv')">
+          <div class="format-choice-badge" style="background:linear-gradient(135deg,#10b981,#059669)">CSV</div>
+          <div class="format-choice-text">
+            <div class="format-choice-title">Spreadsheet (CSV)</div>
+            <div class="format-choice-desc">Columns: Date, Location, DC Code, Description, Add. Info</div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-clear" onclick="closeImportPicker()">CANCEL</button>
     </div>
   </div>
 </div>
@@ -1357,7 +1453,7 @@
 </div>
 
 <!-- Version Label -->
-<button type="button" class="version-label" onclick="openVersionHistory()" title="Click to view version history"><span class="alpha-badge">Beta</span> <span id="versionBadgeText"></span></button>
+<button type="button" class="version-label" onclick="openVersionHistory()" title="Click to view version history"><span id="versionBadgeText"></span></button>
 
 <!-- Toast notification -->
 <div class="toast" id="toast"></div>
@@ -1967,6 +2063,7 @@ function renderTable(rows) {
   tbody.innerHTML = "";
   rows.forEach(r => {
     const tr = document.createElement("tr");
+    tr.dataset.id = r.id;
     tr.innerHTML = `
       <td class="center">${r.id}</td>
       <td class="center">${r.entry_date}</td>
@@ -2475,6 +2572,176 @@ function importJSON(input) {
   reader.readAsText(file);
 }
 
+// ── Unified Export / Import pickers ──────────────
+function openExportPicker() { $("exportModal").classList.add("open"); }
+function closeExportPicker() { $("exportModal").classList.remove("open"); }
+function openImportPicker() { $("importModal").classList.add("open"); }
+function closeImportPicker() { $("importModal").classList.remove("open"); }
+
+function doExport(format) {
+  closeExportPicker();
+  if (format === "csv") exportCSV();
+  else if (format === "json") exportJSON();
+  else if (format === "pdf") exportPDF();
+}
+
+function pickImportFormat(format) {
+  closeImportPicker();
+  const input = $("importFile");
+  input.accept = format === "csv" ? ".csv" : ".json";
+  input.dataset.forceFormat = format;
+  input.click();
+}
+
+function onImportFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const name = (file.name || "").toLowerCase();
+  const forced = input.dataset.forceFormat || "";
+  const isCSV = forced === "csv" || (!forced && name.endsWith(".csv"));
+  const isJSON = forced === "json" || (!forced && name.endsWith(".json"));
+  input.dataset.forceFormat = "";
+  if (isCSV) importCSV(input);
+  else if (isJSON) importJSON(input);
+  else { toast("Unsupported file — use .json or .csv", "error"); input.value = ""; }
+}
+
+function exportPDF() {
+  const tasks = loadTasks();
+  if (!tasks.length) { toast("No records to export.", "error"); return; }
+  const visibleIds = new Set();
+  const rows = $("taskBody").querySelectorAll("tr");
+  rows.forEach(tr => {
+    if (tr.style.display === "none") return;
+    const id = parseInt(tr.dataset.id || tr.getAttribute("data-id") || "0", 10);
+    if (id) visibleIds.add(id);
+  });
+  const pool = visibleIds.size ? tasks.filter(t => visibleIds.has(t.id)) : tasks;
+  if (!pool.length) { toast("No visible records to export.", "error"); return; }
+  const sorted = [...pool].sort((a, b) => (a.entry_date < b.entry_date ? 1 : -1));
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  const bodyRows = sorted.map(t => `
+      <tr>
+        <td>${esc(t.entry_date)}</td>
+        <td>${esc(t.day_of_week || "")}</td>
+        <td>${esc(t.location || "")}</td>
+        <td>${esc(t.dc_code || "")}</td>
+        <td>${esc(t.description || "")}</td>
+        <td>${esc(t.add_info || "")}</td>
+      </tr>`).join("");
+  const title = "EVI Daily Task Log — " + localDateStr();
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>
+  body { font: 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color:#111; padding:0; margin:0; }
+  .wrap { padding: 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; color:#0a2540; }
+  .meta { color:#666; margin-bottom: 18px; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid #dde3ec; text-align: left; vertical-align: top; font-size: 11.5px; }
+  th { background:#0a2540; color:#fff; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+  tr:nth-child(even) td { background:#f6f9fc; }
+  td:nth-child(5), td:nth-child(6) { word-break: break-word; max-width: 280px; }
+  @page { margin: 14mm; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style></head><body>
+<div class="wrap">
+  <h1>EVI Daily Task Log</h1>
+  <div class="meta">${sorted.length} record${sorted.length !== 1 ? "s" : ""} &middot; Exported ${new Date().toLocaleString()}</div>
+  <table>
+    <thead><tr><th>Date</th><th>Day</th><th>Location</th><th>DC</th><th>Description</th><th>Add. Info</th></tr></thead>
+    <tbody>${bodyRows}</tbody>
+  </table>
+</div>
+<scr`+`ipt>window.addEventListener("load", function(){ setTimeout(function(){ window.focus(); window.print(); }, 250); });</scr`+`ipt>
+</body></html>`;
+  const w = window.open("", "_blank");
+  if (!w) { toast("Popup blocked — allow popups to export PDF.", "error"); return; }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  toast("PDF ready — choose \"Save as PDF\" in the print dialog.", "success");
+}
+
+function importCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result || "";
+    const lines = text.split(/\r?\n/).filter(l => l.length);
+    if (lines.length < 2) { toast("CSV appears empty.", "error"); input.value = ""; return; }
+    const parseRow = row => {
+      const out = []; let cur = ""; let inQ = false;
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (inQ) {
+          if (ch === "\"" && row[i+1] === "\"") { cur += "\""; i++; }
+          else if (ch === "\"") inQ = false;
+          else cur += ch;
+        } else {
+          if (ch === ",") { out.push(cur); cur = ""; }
+          else if (ch === "\"") inQ = true;
+          else cur += ch;
+        }
+      }
+      out.push(cur);
+      return out;
+    };
+    const headers = parseRow(lines[0]).map(h => h.trim().toLowerCase());
+    const iDate = headers.findIndex(h => /^date$/.test(h) || /entry.?date/.test(h));
+    const iLoc  = headers.findIndex(h => /^location$/.test(h));
+    const iDC   = headers.findIndex(h => /^dc.?code$/.test(h) || /^dc$/.test(h));
+    const iDesc = headers.findIndex(h => /^description$/.test(h));
+    const iAdd  = headers.findIndex(h => /add.*info/.test(h) || /^info$/.test(h));
+    if (iDate < 0 || iDesc < 0) {
+      toast("CSV needs at least \"Date\" and \"Description\" columns.", "error");
+      input.value = ""; return;
+    }
+    const records = [];
+    for (let k = 1; k < lines.length; k++) {
+      const r = parseRow(lines[k]);
+      const d = (r[iDate] || "").trim();
+      const desc = (r[iDesc] || "").trim();
+      if (!d || !desc) continue;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
+      records.push({
+        entry_date: d,
+        location: ((iLoc >= 0 ? r[iLoc] : "") || "DH1").trim(),
+        dc_code: ((iDC >= 0 ? r[iDC] : "") || "EVI01").trim(),
+        description: desc,
+        add_info: iAdd >= 0 ? (r[iAdd] || "").trim() : "",
+      });
+    }
+    if (!records.length) { toast("No valid rows found in CSV.", "error"); input.value = ""; return; }
+    if (!confirm("Import " + records.length + " record(s) from CSV? This will ADD to existing records.")) { input.value = ""; return; }
+    const existing = loadTasks();
+    let maxId = existing.length ? Math.max(...existing.map(t => t.id)) : 0;
+    records.forEach(r => {
+      maxId++;
+      const dt = new Date(r.entry_date + "T00:00:00");
+      existing.push({
+        id: maxId,
+        entry_date: r.entry_date,
+        day_of_week: dt.toLocaleDateString("en-US", { weekday: "long" }),
+        week_number: getWeekNumber(dt),
+        year: dt.getFullYear(),
+        location: r.location,
+        dc_code: r.dc_code,
+        description: r.description,
+        add_info: r.add_info,
+        saved_at: new Date().toISOString(),
+      });
+    });
+    saveTasks(existing);
+    nextId = maxId + 1;
+    toast("Imported " + records.length + " record(s) from CSV!", "success");
+    refreshActiveTab();
+    input.value = "";
+  };
+  reader.readAsText(file);
+}
+
 // ── Quick Duplicate ──────────────────────────────
 function dupRecord(id) {
   const r = getTask(id);
@@ -2533,10 +2800,12 @@ document.addEventListener("keydown", function(e) {
     else if ($("recurringModal").classList.contains("open")) closeRecurring();
     else if ($("versionModal").classList.contains("open")) closeVersionHistory();
     else if ($("settingsModal").classList.contains("open")) closeSettings();
+    else if ($("exportModal").classList.contains("open")) closeExportPicker();
+    else if ($("importModal").classList.contains("open")) closeImportPicker();
   }
   if ((e.ctrlKey || e.metaKey) && e.key === "e") {
     e.preventDefault();
-    exportCSV();
+    openExportPicker();
   }
   if ((e.ctrlKey || e.metaKey) && e.key === "f" && activeTab === "all") {
     if (document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
@@ -2550,8 +2819,16 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v0.6.3";
+const CURRENT_VERSION = "v1.0.0";
 const VERSION_HISTORY = [
+  { version: "v1.0.0", date: "2026-04-21", features: [
+      "Graduated from Beta to stable — Beta badge removed from the version label",
+      "Unified EXPORT button — single click opens a format picker: CSV (spreadsheet), JSON (full backup including attachments), or PDF (printable report via browser Save-as-PDF dialog)",
+      "Unified IMPORT button — picker lets the user choose JSON (full backup) or CSV (Date, Location, DC Code, Description, Add. Info columns)",
+      "New CSV import supports any file with at minimum Date and Description columns; validates YYYY-MM-DD dates and skips malformed rows",
+      "New PDF export opens a formatted report in a new window and triggers the print dialog",
+      "Ctrl+E now opens the Export picker (was: direct CSV export)"
+  ]},
   { version: "v0.6.3", date: "2026-04-21", features: [
       "Weekly AI summary now lists actual task descriptions day-by-day, not just counts — e.g., \"Monday (2026-04-20) — patch panel install; rack audit; cable cleanup\"",
       "Up to 6 task names per day shown, with \"+N more\" overflow; long descriptions truncated at 120 chars",
@@ -3035,6 +3312,8 @@ document.addEventListener("click", function(e) {
   if (e.target.id === "recurringModal") closeRecurring();
   if (e.target.id === "versionModal") closeVersionHistory();
   if (e.target.id === "settingsModal") closeSettings();
+  if (e.target.id === "exportModal") closeExportPicker();
+  if (e.target.id === "importModal") closeImportPicker();
   if (e.target.id === "attPreviewModal") closeAttPreview();
 });
 

@@ -30,6 +30,15 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.0.0 (2026-04-21)
+**Stable Release:**
+- Graduated from Beta to stable — Beta badge removed from the version label
+- Unified **EXPORT** button — opens a format picker: CSV (spreadsheet), JSON (full backup incl. attachments), or PDF (printable report via browser Save-as-PDF dialog)
+- Unified **IMPORT** button — picker lets the user choose JSON (full backup) or CSV (Date, Location, DC Code, Description, Add. Info columns)
+- New CSV import supports any file with at minimum Date and Description columns; validates YYYY-MM-DD dates and skips malformed rows
+- New PDF export opens a formatted report in a new window and triggers the print dialog
+- Ctrl+E now opens the Export picker (was: direct CSV export)
+
 ### v0.6.3 (2026-04-21)
 **New Features:**
 - Weekly AI summary now lists actual task descriptions day-by-day, not just counts — e.g., "Monday (2026-04-20) — patch panel install; rack audit; cable cleanup"
