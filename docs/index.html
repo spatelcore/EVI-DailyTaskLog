@@ -1587,7 +1587,7 @@ function fetchTasksByMode(mode, params) {
     return tasks.filter(t => t.year === yr && t.week_number === wk)
                 .sort((a,b) => a.entry_date.localeCompare(b.entry_date) || a.saved_at.localeCompare(b.saved_at));
   } else {
-    return tasks.sort((a,b) => b.entry_date.localeCompare(a.entry_date) || b.saved_at.localeCompare(a.saved_at));
+    return tasks.sort((a,b) => (b.id || 0) - (a.id || 0));
   }
 }
 
@@ -2819,8 +2819,11 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.0.0";
+const CURRENT_VERSION = "v1.0.1";
 const VERSION_HISTORY = [
+  { version: "v1.0.1", date: "2026-04-21", features: [
+      "All Records table now sorts by record ID descending — the most recently added log shows at the top regardless of its entry date"
+  ]},
   { version: "v1.0.0", date: "2026-04-21", features: [
       "Graduated from Beta to stable — Beta badge removed from the version label",
       "Unified EXPORT button — single click opens a format picker: CSV (spreadsheet), JSON (full backup including attachments), or PDF (printable report via browser Save-as-PDF dialog)",

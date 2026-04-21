@@ -30,6 +30,10 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.0.1 (2026-04-21)
+**Improvements:**
+- All Records table now sorts by record ID descending — the most recently added log shows at the top regardless of its entry date
+
 ### v1.0.0 (2026-04-21)
 **Stable Release:**
 - Graduated from Beta to stable — Beta badge removed from the version label
