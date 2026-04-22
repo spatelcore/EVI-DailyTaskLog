@@ -622,7 +622,27 @@
                 inset 0 -10px 20px -10px rgba(0,0,0,0.12);
     transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.15s ease;
     position: relative;
+    overflow: hidden;
+    isolation: isolate;
   }
+  .btn::before {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -120%;
+    width: 60%;
+    background: linear-gradient(115deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.15) 40%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0.15) 60%,
+      rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    pointer-events: none;
+    z-index: 1;
+    transition: left 0.6s ease;
+  }
+  .btn:hover::before { left: 120%; }
   .btn:hover { transform: translateY(-1px); filter: brightness(1.04); box-shadow: var(--shadow-2), inset 0 1px 0 rgba(255,255,255,0.25); opacity: 1; }
   .btn:active { transform: translateY(0); filter: brightness(0.97); }
   .btn:focus-visible { outline: none; box-shadow: var(--shadow-1), var(--ring); }
@@ -749,7 +769,28 @@
                 inset 0 1px 0 rgba(255,255,255,0.2),
                 inset 0 -4px 8px -4px rgba(0,0,0,0.15);
     transition: transform 0.15s, filter 0.15s;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
   }
+  .act-btn::before {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -120%;
+    width: 60%;
+    background: linear-gradient(115deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.15) 40%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0.15) 60%,
+      rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    pointer-events: none;
+    z-index: 1;
+    transition: left 0.6s ease;
+  }
+  .act-btn:hover::before { left: 120%; }
   .act-btn:hover { transform: translateY(-1px); filter: brightness(1.05); opacity: 1; }
 
   /* ── Week header + day cards ───────────────────────────────────────── */
@@ -2819,8 +2860,11 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.0.1";
+const CURRENT_VERSION = "v1.0.2";
 const VERSION_HISTORY = [
+  { version: "v1.0.2", date: "2026-04-22", features: [
+      "Added a mirror/shine sweep effect to all buttons (main .btn and row-action .act-btn) — a soft diagonal highlight glides across on hover"
+  ]},
   { version: "v1.0.1", date: "2026-04-21", features: [
       "All Records table now sorts by record ID descending — the most recently added log shows at the top regardless of its entry date"
   ]},

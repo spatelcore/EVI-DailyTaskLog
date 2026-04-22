@@ -30,6 +30,10 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.0.2 (2026-04-22)
+**UI Polish:**
+- Added a mirror/shine sweep effect to all buttons (main `.btn` and row-action `.act-btn`) — a soft diagonal highlight glides across on hover
+
 ### v1.0.1 (2026-04-21)
 **Improvements:**
 - All Records table now sorts by record ID descending — the most recently added log shows at the top regardless of its entry date
