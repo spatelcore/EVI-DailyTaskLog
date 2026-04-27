@@ -610,9 +610,6 @@ HTML_PAGE = r"""
                            text-transform:uppercase; line-height:1.2; }
   .mini-stat .mini-sub { font-size:10px; color:var(--text); opacity:0.5; }
 
-  /* DUP button */
-  .act-dup { background:var(--orange); }
-
   /* Export button */
   .btn-export { background:var(--navy); }
 
@@ -1062,7 +1059,6 @@ function renderTable(rows) {
       <td class="info-col">${esc(r.add_info||"")}</td>
       <td class="center">${r.saved_at||""}</td>
       <td class="actions">
-        <button class="act-btn act-dup" onclick="dupRecord(${r.id})">DUP</button>
         <button class="act-btn act-edit" onclick="editRecord(${r.id})">EDIT</button>
         <button class="act-btn act-del" onclick="deleteRecord(${r.id})">DEL</button>
       </td>`;
@@ -1330,37 +1326,6 @@ async function importJSON(input) {
     toast(result.error || "Import failed", "error");
   }
   input.value = "";
-}
-
-// ── Quick Duplicate ──────────────────────────────
-async function dupRecord(id) {
-  const res = await fetch("/api/task/" + id);
-  if (!res.ok) { toast("Could not load record.", "error"); return; }
-  const r = await res.json();
-
-  // Pre-fill form with duplicated data
-  $("entryDate").value = new Date().toISOString().slice(0,10);
-  updateDateDisplay($("entryDate").value);
-  $("description").value = r.description || "";
-  $("addInfo").value = r.add_info || "";
-  $("dcCode").value = r.dc_code || "EVI01";
-
-  // Set location
-  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6"];
-  const loc = r.location || "DH1";
-  if (knownLocs.includes(loc)) {
-    document.getElementById("loc-" + loc).checked = true;
-    $("locOther").style.display = "none";
-    $("locOther").value = "";
-  } else {
-    document.getElementById("loc-Other").checked = true;
-    $("locOther").style.display = "inline-block";
-    $("locOther").value = loc;
-  }
-
-  toast("Form filled from record #" + id + " — edit and save as new.", "success");
-  $("description").focus();
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ── Stats Dashboard ──────────────────────────────

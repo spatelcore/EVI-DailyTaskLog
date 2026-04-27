@@ -10,7 +10,6 @@ A lightweight, browser-based daily task logger for datacenter operations at **EV
 - **Search & Filter** — Real-time search across all records
 - **Stats Dashboard** — At-a-glance counts for today, this week, and all time
 - **Inline Edit/Delete** — Edit or delete any record directly from the table
-- **Duplicate** — Quick-fill the form from an existing record
 - **Export/Import** — CSV export, JSON export/import for backup and transfer
 - **Data Persistence** — Records stored in localStorage and seeded from `data.json` in the repo
 - **CST Timezone** — All dates and timestamps locked to America/Chicago (CST/CDT)
@@ -29,6 +28,10 @@ Format: **vX.Y.Z**
 | **Z** (Patch) | Minor bug fix or small tweak | v0.1.2 |
 
 ## Version History
+
+### v1.0.3 (2026-04-27)
+**Removed:**
+- Removed the row-action **DUP** (duplicate) button and its handler from the All Records table
 
 ### v1.0.2 (2026-04-22)
 **UI Polish:**

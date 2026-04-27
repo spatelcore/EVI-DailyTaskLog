@@ -195,7 +195,6 @@
   .act-btn:hover { opacity: 0.8; }
   .act-edit { background: var(--blue); }
   .act-del  { background: var(--red); }
-  .act-dup  { background: var(--orange); }
 
   .toast { position: fixed; top: 20px; right: 20px; padding: 14px 24px;
            border-radius: 6px; color: #fff; font-weight: bold; font-size: 14px;
@@ -656,7 +655,6 @@
   /* Row-action buttons follow the same palette */
   .act-edit { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color:#fff; }
   .act-del  { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); color:#fff; }
-  .act-dup  { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:#fff; }
 
   /* ── Status bar ────────────────────────────────────────────────────── */
   .status-bar {
@@ -2116,7 +2114,6 @@ function renderTable(rows) {
       <td class="center">${renderAttCell(r.id)}</td>
       <td class="center">${r.saved_at||""}</td>
       <td class="actions">
-        <button class="act-btn act-dup" onclick="dupRecord(${r.id})">DUP</button>
         <button class="act-btn act-edit" onclick="editRecord(${r.id})">EDIT</button>
         <button class="act-btn act-del" onclick="deleteRecord(${r.id})">DEL</button>
       </td>`;
@@ -2783,31 +2780,6 @@ function importCSV(input) {
   reader.readAsText(file);
 }
 
-// ── Quick Duplicate ──────────────────────────────
-function dupRecord(id) {
-  const r = getTask(id);
-  if (!r) { toast("Could not load record.", "error"); return; }
-  $("entryDate").value = localDateStr();
-  updateDateDisplay($("entryDate").value);
-  $("description").value = r.description || "";
-  $("addInfo").value = r.add_info || "";
-  $("dcCode").value = r.dc_code || "EVI01";
-  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6"];
-  const loc = r.location || "DH1";
-  if (knownLocs.includes(loc)) {
-    document.getElementById("loc-" + loc).checked = true;
-    $("locOther").style.display = "none";
-    $("locOther").value = "";
-  } else {
-    document.getElementById("loc-Other").checked = true;
-    $("locOther").style.display = "inline-block";
-    $("locOther").value = loc;
-  }
-  toast("Form filled from record #" + id + " — edit and save as new.", "success");
-  $("description").focus();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
 // ── Stats Dashboard ──────────────────────────────
 function updateStats() {
   const today = localDateStr();
@@ -2860,8 +2832,11 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.0.2";
+const CURRENT_VERSION = "v1.0.3";
 const VERSION_HISTORY = [
+  { version: "v1.0.3", date: "2026-04-27", features: [
+      "Removed the row-action DUP (duplicate) button and its handler from the All Records table"
+  ]},
   { version: "v1.0.2", date: "2026-04-22", features: [
       "Added a mirror/shine sweep effect to all buttons (main .btn and row-action .act-btn) — a soft diagonal highlight glides across on hover"
   ]},
