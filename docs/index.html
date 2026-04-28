@@ -163,6 +163,8 @@
   .btn { padding: 10px 20px; font-size: 14px; font-weight: bold; color: #fff;
          border: none; border-radius: 5px; cursor: pointer; transition: opacity 0.15s; }
   .btn:hover { opacity: 0.85; }
+  .btn:disabled, .btn.is-disabled { opacity: 0.45; cursor: not-allowed; filter: grayscale(40%); }
+  .btn:disabled:hover, .btn.is-disabled:hover { opacity: 0.45; }
   .btn-save   { background: var(--green); }
   .btn-clear  { background: var(--orange); }
   .btn-delete { background: var(--red); }
@@ -998,13 +1000,16 @@
       <div class="form-row">
         <label>Location</label>
         <div class="radio-group" id="locGroup">
-          <input type="radio" name="location" id="loc-DH1" value="DH1" checked><label for="loc-DH1">DH1</label>
-          <input type="radio" name="location" id="loc-DH2" value="DH2"><label for="loc-DH2">DH2</label>
-          <input type="radio" name="location" id="loc-DH3" value="DH3"><label for="loc-DH3">DH3</label>
-          <input type="radio" name="location" id="loc-DH4" value="DH4"><label for="loc-DH4">DH4</label>
-          <input type="radio" name="location" id="loc-DH5" value="DH5"><label for="loc-DH5">DH5</label>
-          <input type="radio" name="location" id="loc-DH6" value="DH6"><label for="loc-DH6">DH6</label>
-          <input type="radio" name="location" id="loc-Other" value="Other"><label for="loc-Other">Others</label>
+          <select id="locSelect" style="padding:8px 10px; font-size:14px; border:2px solid var(--blue); border-radius:5px; background:var(--input-bg); color:var(--text); min-width:160px;">
+            <option value="" disabled selected>-- Select location --</option>
+            <option value="DH1">DH1</option>
+            <option value="DH2">DH2</option>
+            <option value="DH3">DH3</option>
+            <option value="DH4">DH4</option>
+            <option value="DH5">DH5</option>
+            <option value="DH6">DH6</option>
+            <option value="Other">Others</option>
+          </select>
           <input type="text" id="locOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
       </div>
@@ -1035,7 +1040,7 @@
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn btn-save" onclick="saveEntry()">SAVE ENTRY <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></button>
+        <button id="saveEntryBtn" class="btn btn-save" onclick="saveEntry()" disabled title="Choose a location to enable">SAVE ENTRY <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></button>
         <button class="btn btn-clear" onclick="clearForm()">CLEAR FORM</button>
         <span class="divider-v"></span>
         <button class="btn btn-blue" onclick="openTemplates()">TEMPLATES</button>
@@ -1917,9 +1922,19 @@ function getWeekNumber(d) {
 }
 
 function getLocation() {
-  const checked = document.querySelector('input[name="location"]:checked');
-  if (checked && checked.value === "Other") return $("locOther").value.trim() || "Other";
-  return checked ? checked.value : "DH1";
+  const sel = $("locSelect");
+  const v = sel ? sel.value : "";
+  if (v === "Other") return $("locOther").value.trim() || "Other";
+  return v;
+}
+
+function updateSaveEntryDisabled() {
+  const btn = $("saveEntryBtn");
+  if (!btn) return;
+  const v = $("locSelect") ? $("locSelect").value : "";
+  const disabled = !v || (v === "Other" && !$("locOther").value.trim());
+  btn.disabled = disabled;
+  btn.classList.toggle("is-disabled", disabled);
 }
 
 function getEditLocation() {
@@ -1936,17 +1951,33 @@ function setupOtherToggle(radioName, inputId) {
     });
   });
 }
-setupOtherToggle("location", "locOther");
 setupOtherToggle("editLocation", "editLocOther");
 setupOtherToggle("bulkLocation", "bulkLocOther");
 setupOtherToggle("ruleLocation", "ruleLocOther");
 
+(function() {
+  const sel = document.getElementById("locSelect");
+  const other = document.getElementById("locOther");
+  if (sel) {
+    sel.addEventListener("change", () => {
+      const isOther = sel.value === "Other";
+      other.style.display = isOther ? "inline-block" : "none";
+      if (isOther) other.focus();
+      else other.value = "";
+      updateSaveEntryDisabled();
+    });
+  }
+  if (other) other.addEventListener("input", updateSaveEntryDisabled);
+})();
+
 // ── Save ──────────────────────────────────────────
 async function saveEntry() {
+  const loc = getLocation();
+  if (!loc) { toast("Please choose a location.", "error"); $("locSelect").focus(); return; }
   const desc = $("description").value.trim();
   if (!desc) { toast("Please enter a task description.", "error"); $("description").focus(); return; }
   const rowId = addTask(
-    $("entryDate").value, desc, getLocation(),
+    $("entryDate").value, desc, loc,
     $("dcCode").value.trim() || "EVI01", $("addInfo").value.trim()
   );
   if (stagedAdd.length) {
@@ -1999,7 +2030,7 @@ function clearForm() {
   $("acList").style.display = "none";
   $("addInfo").value = "";
   $("dcCode").value = "EVI01";
-  document.getElementById("loc-DH1").checked = true;
+  $("locSelect").value = "";
   $("locOther").value = "";
   $("locOther").style.display = "none";
   const today = localDateStr();
@@ -2007,6 +2038,7 @@ function clearForm() {
   updateDateDisplay(today);
   stagedAdd = [];
   renderStagedList("add");
+  updateSaveEntryDisabled();
   setStatus("Form cleared — ready for new entry.");
 }
 
@@ -2832,8 +2864,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.0.3";
+const CURRENT_VERSION = "v1.1.0";
 const VERSION_HISTORY = [
+  { version: "v1.1.0", date: "2026-04-28", features: [
+      "Location field on the SAVE ENTRY form is now a dropdown menu with no default selection (placeholder: \"-- Select location --\")",
+      "SAVE ENTRY button stays disabled until a location is chosen (and \"Others\" requires a non-empty custom value)",
+      "Disabled state styling added for .btn (reduced opacity, grayscale, not-allowed cursor)"
+  ]},
   { version: "v1.0.3", date: "2026-04-27", features: [
       "Removed the row-action DUP (duplicate) button and its handler from the All Records table"
   ]},
@@ -3063,14 +3100,15 @@ function loadTemplate(id) {
   if (!tpl) return;
   const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6"];
   if (knownLocs.includes(tpl.location)) {
-    document.getElementById("loc-" + tpl.location).checked = true;
+    $("locSelect").value = tpl.location;
     $("locOther").style.display = "none";
     $("locOther").value = "";
   } else {
-    document.getElementById("loc-Other").checked = true;
+    $("locSelect").value = "Other";
     $("locOther").style.display = "inline-block";
-    $("locOther").value = tpl.location;
+    $("locOther").value = tpl.location || "";
   }
+  updateSaveEntryDisabled();
   $("dcCode").value = tpl.dc_code || "EVI01";
   $("description").value = tpl.description || "";
   $("addInfo").value = tpl.add_info || "";

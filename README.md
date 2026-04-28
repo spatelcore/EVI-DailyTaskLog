@@ -29,6 +29,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.1.0 (2026-04-28)
+**Improvements:**
+- Location field on the SAVE ENTRY form is now a **dropdown menu** with no default selection (placeholder: "-- Select location --")
+- **SAVE ENTRY** button stays disabled until a location is chosen (and "Others" requires a non-empty custom value)
+- Disabled-state styling added for `.btn` (reduced opacity, grayscale, `not-allowed` cursor)
+
 ### v1.0.3 (2026-04-27)
 **Removed:**
 - Removed the row-action **DUP** (duplicate) button and its handler from the All Records table
