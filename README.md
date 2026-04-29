@@ -29,6 +29,10 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.1.1 (2026-04-29)
+**New Features:**
+- Added **"L3-Optics Cage"** as a built-in location option (SAVE ENTRY dropdown, plus EDIT / BULK ENTRY / RECURRING RULE forms)
+
 ### v1.1.0 (2026-04-28)
 **Improvements:**
 - Location field on the SAVE ENTRY form is now a **dropdown menu** with no default selection (placeholder: "-- Select location --")

@@ -1008,6 +1008,7 @@
             <option value="DH4">DH4</option>
             <option value="DH5">DH5</option>
             <option value="DH6">DH6</option>
+            <option value="L3-Optics Cage">L3-Optics Cage</option>
             <option value="Other">Others</option>
           </select>
           <input type="text" id="locOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
@@ -1167,6 +1168,7 @@
           <input type="radio" name="editLocation" id="edit-loc-DH4" value="DH4"><label for="edit-loc-DH4">DH4</label>
           <input type="radio" name="editLocation" id="edit-loc-DH5" value="DH5"><label for="edit-loc-DH5">DH5</label>
           <input type="radio" name="editLocation" id="edit-loc-DH6" value="DH6"><label for="edit-loc-DH6">DH6</label>
+          <input type="radio" name="editLocation" id="edit-loc-L3OpticsCage" value="L3-Optics Cage"><label for="edit-loc-L3OpticsCage">L3-Optics Cage</label>
           <input type="radio" name="editLocation" id="edit-loc-Other" value="Other"><label for="edit-loc-Other">Others</label>
           <input type="text" id="editLocOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
@@ -1385,6 +1387,7 @@
           <input type="radio" name="bulkLocation" id="bulk-loc-DH4" value="DH4"><label for="bulk-loc-DH4">DH4</label>
           <input type="radio" name="bulkLocation" id="bulk-loc-DH5" value="DH5"><label for="bulk-loc-DH5">DH5</label>
           <input type="radio" name="bulkLocation" id="bulk-loc-DH6" value="DH6"><label for="bulk-loc-DH6">DH6</label>
+          <input type="radio" name="bulkLocation" id="bulk-loc-L3OpticsCage" value="L3-Optics Cage"><label for="bulk-loc-L3OpticsCage">L3-Optics Cage</label>
           <input type="radio" name="bulkLocation" id="bulk-loc-Other" value="Other"><label for="bulk-loc-Other">Others</label>
           <input type="text" id="bulkLocOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
@@ -1433,6 +1436,7 @@
           <input type="radio" name="ruleLocation" id="rule-loc-DH4" value="DH4"><label for="rule-loc-DH4">DH4</label>
           <input type="radio" name="ruleLocation" id="rule-loc-DH5" value="DH5"><label for="rule-loc-DH5">DH5</label>
           <input type="radio" name="ruleLocation" id="rule-loc-DH6" value="DH6"><label for="rule-loc-DH6">DH6</label>
+          <input type="radio" name="ruleLocation" id="rule-loc-L3OpticsCage" value="L3-Optics Cage"><label for="rule-loc-L3OpticsCage">L3-Optics Cage</label>
           <input type="radio" name="ruleLocation" id="rule-loc-Other" value="Other"><label for="rule-loc-Other">Others</label>
           <input type="text" id="ruleLocOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
@@ -2061,9 +2065,10 @@ function editRecord(id) {
   $("editDescription").value = r.description || "";
   $("editAddInfo").value = r.add_info || "";
   const loc = r.location || "DH1";
-  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6"];
+  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6","L3-Optics Cage"];
   if (knownLocs.includes(loc)) {
-    document.getElementById("edit-loc-" + loc).checked = true;
+    const radio = document.querySelector('input[name="editLocation"][value="' + loc + '"]');
+    if (radio) radio.checked = true;
     $("editLocOther").style.display = "none";
     $("editLocOther").value = "";
   } else {
@@ -2864,8 +2869,11 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.1.0";
+const CURRENT_VERSION = "v1.1.1";
 const VERSION_HISTORY = [
+  { version: "v1.1.1", date: "2026-04-29", features: [
+      "Added \"L3-Optics Cage\" as a built-in location option (SAVE ENTRY dropdown, plus EDIT / BULK ENTRY / RECURRING RULE forms)"
+  ]},
   { version: "v1.1.0", date: "2026-04-28", features: [
       "Location field on the SAVE ENTRY form is now a dropdown menu with no default selection (placeholder: \"-- Select location --\")",
       "SAVE ENTRY button stays disabled until a location is chosen (and \"Others\" requires a non-empty custom value)",
@@ -3098,7 +3106,7 @@ function saveCurrentAsTemplate() {
 function loadTemplate(id) {
   const tpl = loadTemplates().find(t => t.id === id);
   if (!tpl) return;
-  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6"];
+  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6","L3-Optics Cage"];
   if (knownLocs.includes(tpl.location)) {
     $("locSelect").value = tpl.location;
     $("locOther").style.display = "none";
