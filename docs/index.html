@@ -1044,8 +1044,6 @@
         <button id="saveEntryBtn" class="btn btn-save" onclick="saveEntry()" disabled title="Choose a location to enable">SAVE ENTRY <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></button>
         <button class="btn btn-clear" onclick="clearForm()">CLEAR FORM</button>
         <span class="divider-v"></span>
-        <button class="btn btn-blue" onclick="openTemplates()">TEMPLATES</button>
-        <button class="btn btn-blue" onclick="openBulk()">BULK ENTRY</button>
         <button class="btn btn-blue" onclick="openRecurring()">RECURRING</button>
       </div>
     </div>
@@ -1339,76 +1337,6 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-clear" onclick="closeVersionHistory()">CLOSE</button>
-    </div>
-  </div>
-</div>
-
-<!-- Templates Modal -->
-<div class="modal-overlay" id="templatesModal">
-  <div class="modal" style="max-width:640px;">
-    <div class="modal-header">
-      <h2>TASK TEMPLATES</h2>
-      <button class="modal-close" onclick="closeTemplates()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="tpl-list" id="tplList"></div>
-      <div class="section-title">SAVE CURRENT FORM AS TEMPLATE</div>
-      <div class="form-row">
-        <label>Name</label>
-        <input type="text" id="tplName" placeholder="e.g. Morning walkthrough">
-      </div>
-      <div class="bulk-hint">Captures current location, DC code, description and additional info.</div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-save" onclick="saveCurrentAsTemplate()">SAVE TEMPLATE</button>
-      <button class="btn btn-clear" onclick="closeTemplates()">CLOSE</button>
-    </div>
-  </div>
-</div>
-
-<!-- Bulk Entry Modal -->
-<div class="modal-overlay" id="bulkModal">
-  <div class="modal" style="max-width:640px;">
-    <div class="modal-header">
-      <h2>BULK ENTRY</h2>
-      <button class="modal-close" onclick="closeBulk()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <label>Date</label>
-        <input type="date" id="bulkDate" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
-      </div>
-      <div class="form-row">
-        <label>Location</label>
-        <div class="radio-group">
-          <input type="radio" name="bulkLocation" id="bulk-loc-DH1" value="DH1" checked><label for="bulk-loc-DH1">DH1</label>
-          <input type="radio" name="bulkLocation" id="bulk-loc-DH2" value="DH2"><label for="bulk-loc-DH2">DH2</label>
-          <input type="radio" name="bulkLocation" id="bulk-loc-DH3" value="DH3"><label for="bulk-loc-DH3">DH3</label>
-          <input type="radio" name="bulkLocation" id="bulk-loc-DH4" value="DH4"><label for="bulk-loc-DH4">DH4</label>
-          <input type="radio" name="bulkLocation" id="bulk-loc-DH5" value="DH5"><label for="bulk-loc-DH5">DH5</label>
-          <input type="radio" name="bulkLocation" id="bulk-loc-DH6" value="DH6"><label for="bulk-loc-DH6">DH6</label>
-          <input type="radio" name="bulkLocation" id="bulk-loc-L3OpticsCage" value="L3-Optics Cage"><label for="bulk-loc-L3OpticsCage">L3-Optics Cage</label>
-          <input type="radio" name="bulkLocation" id="bulk-loc-Other" value="Other"><label for="bulk-loc-Other">Others</label>
-          <input type="text" id="bulkLocOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
-        </div>
-      </div>
-      <div class="form-row">
-        <label>DC Code</label>
-        <input type="text" id="bulkDcCode" value="EVI01" style="max-width:160px;">
-      </div>
-      <div class="form-row">
-        <label>Descriptions</label>
-        <textarea id="bulkDescriptions" rows="6" placeholder="One task per line..."></textarea>
-      </div>
-      <div class="bulk-hint">Each non-empty line becomes a separate record with the settings above.</div>
-      <div class="form-row">
-        <label>Add. Info</label>
-        <textarea id="bulkAddInfo" rows="2" placeholder="Shared across all records (optional)"></textarea>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-save" onclick="saveBulkEntries()">SAVE ALL</button>
-      <button class="btn btn-clear" onclick="closeBulk()">CANCEL</button>
     </div>
   </div>
 </div>
@@ -1956,7 +1884,6 @@ function setupOtherToggle(radioName, inputId) {
   });
 }
 setupOtherToggle("editLocation", "editLocOther");
-setupOtherToggle("bulkLocation", "bulkLocOther");
 setupOtherToggle("ruleLocation", "ruleLocOther");
 
 (function() {
@@ -2845,8 +2772,6 @@ document.addEventListener("keydown", function(e) {
     if ($("attPreviewModal").classList.contains("open")) closeAttPreview();
     else if ($("editModal").classList.contains("open")) closeEdit();
     else if ($("summaryModal").classList.contains("open")) closeSummary();
-    else if ($("templatesModal").classList.contains("open")) closeTemplates();
-    else if ($("bulkModal").classList.contains("open")) closeBulk();
     else if ($("recurringModal").classList.contains("open")) closeRecurring();
     else if ($("versionModal").classList.contains("open")) closeVersionHistory();
     else if ($("settingsModal").classList.contains("open")) closeSettings();
@@ -2869,8 +2794,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.1.1";
+const CURRENT_VERSION = "v1.2.0";
 const VERSION_HISTORY = [
+  { version: "v1.2.0", date: "2026-04-29", features: [
+      "Removed the TEMPLATES feature (button, modal, save/load/delete handlers, and localStorage key)",
+      "Removed the BULK ENTRY feature (button, modal, location radios, and save handler)",
+      "Existing template/bulk records remain untouched; only the entry-form tools are gone"
+  ]},
   { version: "v1.1.1", date: "2026-04-29", features: [
       "Added \"L3-Optics Cage\" as a built-in location option (SAVE ENTRY dropdown, plus EDIT / BULK ENTRY / RECURRING RULE forms)"
   ]},
@@ -3042,131 +2972,6 @@ function renderVersionHistory() {
       + '<div class="ver-body">' + body + '</div>'
       + '</div>';
   }).join("");
-}
-
-// ══════════════════════════════════════════════════
-// Task Templates
-// ══════════════════════════════════════════════════
-const TEMPLATES_KEY = "evi_templates";
-
-function loadTemplates() {
-  const raw = localStorage.getItem(TEMPLATES_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-function saveTemplatesToStorage(tpls) { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(tpls)); }
-
-function openTemplates() {
-  renderTemplatesList();
-  $("tplName").value = "";
-  $("templatesModal").classList.add("open");
-}
-function closeTemplates() { $("templatesModal").classList.remove("open"); }
-
-function renderTemplatesList() {
-  const tpls = loadTemplates();
-  const container = $("tplList");
-  if (!tpls.length) {
-    container.innerHTML = '<div class="tpl-empty">No templates yet. Fill the form and save below.</div>';
-    return;
-  }
-  container.innerHTML = tpls.map(t => {
-    const descPreview = (t.description || "").substring(0, 80) + ((t.description || "").length > 80 ? "…" : "");
-    return '<div class="tpl-item">'
-      + '<div class="tpl-item-info">'
-      + '<div class="tpl-item-name">' + esc(t.name) + '</div>'
-      + '<div class="tpl-item-desc">' + esc(t.location) + ' / ' + esc(t.dc_code || "EVI01") + ' — ' + esc(descPreview) + '</div>'
-      + '</div>'
-      + '<div style="display:flex; gap:6px;">'
-      + '<button class="act-btn act-edit" onclick="loadTemplate(' + t.id + ')">LOAD</button>'
-      + '<button class="act-btn act-del" onclick="deleteTemplate(' + t.id + ')">DEL</button>'
-      + '</div>'
-      + '</div>';
-  }).join("");
-}
-
-function saveCurrentAsTemplate() {
-  const name = $("tplName").value.trim();
-  if (!name) { toast("Template name required.", "error"); return; }
-  const tpls = loadTemplates();
-  const nextTplId = tpls.length ? Math.max(...tpls.map(t => t.id)) + 1 : 1;
-  tpls.push({
-    id: nextTplId,
-    name: name,
-    location: getLocation(),
-    dc_code: $("dcCode").value.trim() || "EVI01",
-    description: $("description").value.trim(),
-    add_info: $("addInfo").value.trim()
-  });
-  saveTemplatesToStorage(tpls);
-  $("tplName").value = "";
-  renderTemplatesList();
-  toast("Template '" + name + "' saved.", "success");
-}
-
-function loadTemplate(id) {
-  const tpl = loadTemplates().find(t => t.id === id);
-  if (!tpl) return;
-  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6","L3-Optics Cage"];
-  if (knownLocs.includes(tpl.location)) {
-    $("locSelect").value = tpl.location;
-    $("locOther").style.display = "none";
-    $("locOther").value = "";
-  } else {
-    $("locSelect").value = "Other";
-    $("locOther").style.display = "inline-block";
-    $("locOther").value = tpl.location || "";
-  }
-  updateSaveEntryDisabled();
-  $("dcCode").value = tpl.dc_code || "EVI01";
-  $("description").value = tpl.description || "";
-  $("addInfo").value = tpl.add_info || "";
-  closeTemplates();
-  toast("Template '" + tpl.name + "' applied.", "success");
-  $("description").focus();
-}
-
-function deleteTemplate(id) {
-  const tpl = loadTemplates().find(t => t.id === id);
-  if (!tpl) return;
-  if (!confirm("Delete template '" + tpl.name + "'?")) return;
-  saveTemplatesToStorage(loadTemplates().filter(t => t.id !== id));
-  renderTemplatesList();
-  toast("Template deleted.", "success");
-}
-
-// ══════════════════════════════════════════════════
-// Bulk Entry
-// ══════════════════════════════════════════════════
-function openBulk() {
-  $("bulkDate").value = $("entryDate").value || localDateStr();
-  $("bulkDcCode").value = "EVI01";
-  $("bulkDescriptions").value = "";
-  $("bulkAddInfo").value = "";
-  document.getElementById("bulk-loc-DH1").checked = true;
-  $("bulkLocOther").style.display = "none";
-  $("bulkLocOther").value = "";
-  $("bulkModal").classList.add("open");
-}
-function closeBulk() { $("bulkModal").classList.remove("open"); }
-
-function getBulkLocation() {
-  const checked = document.querySelector('input[name="bulkLocation"]:checked');
-  if (checked && checked.value === "Other") return $("bulkLocOther").value.trim() || "Other";
-  return checked ? checked.value : "DH1";
-}
-
-function saveBulkEntries() {
-  const date = $("bulkDate").value;
-  if (!date) { toast("Please pick a date.", "error"); return; }
-  const lines = $("bulkDescriptions").value.split("\n").map(s => s.trim()).filter(Boolean);
-  if (!lines.length) { toast("Please enter at least one description.", "error"); return; }
-  const location = getBulkLocation();
-  const dc = $("bulkDcCode").value.trim() || "EVI01";
-  const info = $("bulkAddInfo").value.trim();
-  lines.forEach(desc => addTask(date, desc, location, dc, info));
-  toast(lines.length + " record(s) saved!", "success");
-  closeBulk();
-  refreshActiveTab();
 }
 
 // ══════════════════════════════════════════════════
@@ -3375,8 +3180,6 @@ function processRecurringTasks() {
 
 // Close new modals on overlay click
 document.addEventListener("click", function(e) {
-  if (e.target.id === "templatesModal") closeTemplates();
-  if (e.target.id === "bulkModal") closeBulk();
   if (e.target.id === "recurringModal") closeRecurring();
   if (e.target.id === "versionModal") closeVersionHistory();
   if (e.target.id === "settingsModal") closeSettings();

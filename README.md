@@ -29,6 +29,11 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.2.0 (2026-04-29)
+**Removed:**
+- Removed the **TEMPLATES** feature (button, modal, save/load/delete handlers, and `evi_templates` localStorage key)
+- Removed the **BULK ENTRY** feature (button, modal, location radios, and save handler)
+
 ### v1.1.1 (2026-04-29)
 **New Features:**
 - Added **"L3-Optics Cage"** as a built-in location option (SAVE ENTRY dropdown, plus EDIT / BULK ENTRY / RECURRING RULE forms)
