@@ -29,6 +29,18 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.3.0 (2026-04-30)
+**New Features:**
+- Added a **Rack** dropdown next to the Location dropdown on the SAVE ENTRY form (and a matching Rack dropdown in the EDIT modal)
+- Rack options activate based on the selected location:
+  - **DH1** → R001 – R320
+  - **DH2** → R001 – R260
+  - **DH3** → R001 – R200
+  - **DH4** → R001 – R120
+  - **DH5 / DH6** → "Coming in a later version" placeholder (disabled)
+  - **L3-Optics Cage / Others** → no rack list (disabled)
+- Rack value is persisted on the record and rendered inline with location (e.g. `DH1 / R042`) in the All Records table, Weekly View, Weekly Summary, and PDF export
+
 ### v1.2.0 (2026-04-29)
 **Removed:**
 - Removed the **TEMPLATES** feature (button, modal, save/load/delete handlers, and `evi_templates` localStorage key)

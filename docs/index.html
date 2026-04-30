@@ -1011,6 +1011,9 @@
             <option value="L3-Optics Cage">L3-Optics Cage</option>
             <option value="Other">Others</option>
           </select>
+          <select id="rackSelect" disabled style="padding:8px 10px; font-size:14px; border:2px solid var(--blue); border-radius:5px; background:var(--input-bg); color:var(--text); min-width:140px;">
+            <option value="">— Select rack —</option>
+          </select>
           <input type="text" id="locOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
       </div>
@@ -1170,6 +1173,12 @@
           <input type="radio" name="editLocation" id="edit-loc-Other" value="Other"><label for="edit-loc-Other">Others</label>
           <input type="text" id="editLocOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
+      </div>
+      <div class="form-row">
+        <label>Rack</label>
+        <select id="editRackSelect" disabled style="padding:8px 10px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); min-width:160px;">
+          <option value="">— Select rack —</option>
+        </select>
       </div>
       <div class="form-row">
         <label>DC Code</label>
@@ -1503,7 +1512,7 @@ function repairWeekNumbers() {
   return fixed;
 }
 
-function addTask(entry_date, description, location, dc_code, add_info) {
+function addTask(entry_date, description, location, dc_code, add_info, rack) {
   const tasks = loadTasks();
   const d = new Date(entry_date + "T00:00:00");
   const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -1514,6 +1523,7 @@ function addTask(entry_date, description, location, dc_code, add_info) {
     day_name: dayNames[d.getDay()],
     description: description,
     location: location,
+    rack: rack || "",
     dc_code: dc_code || "EVI01",
     add_info: add_info || "",
     week_number: getWeekNumber(d),
@@ -1531,7 +1541,7 @@ function getTask(id) {
   return loadTasks().find(t => t.id === id) || null;
 }
 
-function updateTask(id, entry_date, description, location, dc_code, add_info) {
+function updateTask(id, entry_date, description, location, dc_code, add_info, rack) {
   const tasks = loadTasks();
   const idx = tasks.findIndex(t => t.id === id);
   if (idx === -1) return false;
@@ -1541,6 +1551,7 @@ function updateTask(id, entry_date, description, location, dc_code, add_info) {
   tasks[idx].day_name = dayNames[d.getDay()];
   tasks[idx].description = description;
   tasks[idx].location = location;
+  tasks[idx].rack = rack || "";
   tasks[idx].dc_code = dc_code || "EVI01";
   tasks[idx].add_info = add_info || "";
   tasks[idx].week_number = getWeekNumber(d);
@@ -1860,6 +1871,45 @@ function getLocation() {
   return v;
 }
 
+const RACK_LIMITS = { DH1: 320, DH2: 260, DH3: 200, DH4: 120 };
+
+function populateRackOptions(targetSelect, loc, currentVal) {
+  const max = RACK_LIMITS[loc];
+  targetSelect.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  if (max) {
+    placeholder.textContent = "— Select rack —";
+    targetSelect.disabled = false;
+  } else if (loc === "DH5" || loc === "DH6") {
+    placeholder.textContent = "Coming in a later version";
+    targetSelect.disabled = true;
+  } else {
+    placeholder.textContent = "— N/A —";
+    targetSelect.disabled = true;
+  }
+  targetSelect.appendChild(placeholder);
+  if (max) {
+    for (let i = 1; i <= max; i++) {
+      const opt = document.createElement("option");
+      opt.value = "R" + String(i).padStart(3, "0");
+      opt.textContent = opt.value;
+      targetSelect.appendChild(opt);
+    }
+  }
+  targetSelect.value = (currentVal && max) ? currentVal : "";
+}
+
+function getRack() {
+  const sel = $("rackSelect");
+  return (sel && !sel.disabled) ? sel.value : "";
+}
+
+function getEditRack() {
+  const sel = $("editRackSelect");
+  return (sel && !sel.disabled) ? sel.value : "";
+}
+
 function updateSaveEntryDisabled() {
   const btn = $("saveEntryBtn");
   if (!btn) return;
@@ -1889,16 +1939,27 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
 (function() {
   const sel = document.getElementById("locSelect");
   const other = document.getElementById("locOther");
+  const rack = document.getElementById("rackSelect");
   if (sel) {
     sel.addEventListener("change", () => {
       const isOther = sel.value === "Other";
       other.style.display = isOther ? "inline-block" : "none";
       if (isOther) other.focus();
       else other.value = "";
+      if (rack) populateRackOptions(rack, sel.value, "");
       updateSaveEntryDisabled();
     });
   }
   if (other) other.addEventListener("input", updateSaveEntryDisabled);
+
+  document.querySelectorAll('input[name="editLocation"]').forEach(r => {
+    r.addEventListener("change", () => {
+      if (r.checked) {
+        const editRack = document.getElementById("editRackSelect");
+        if (editRack) populateRackOptions(editRack, r.value, "");
+      }
+    });
+  });
 })();
 
 // ── Save ──────────────────────────────────────────
@@ -1909,7 +1970,8 @@ async function saveEntry() {
   if (!desc) { toast("Please enter a task description.", "error"); $("description").focus(); return; }
   const rowId = addTask(
     $("entryDate").value, desc, loc,
-    $("dcCode").value.trim() || "EVI01", $("addInfo").value.trim()
+    $("dcCode").value.trim() || "EVI01", $("addInfo").value.trim(),
+    getRack()
   );
   if (stagedAdd.length) {
     await persistStaged(rowId, stagedAdd);
@@ -1964,6 +2026,7 @@ function clearForm() {
   $("locSelect").value = "";
   $("locOther").value = "";
   $("locOther").style.display = "none";
+  populateRackOptions($("rackSelect"), "", "");
   const today = localDateStr();
   $("entryDate").value = today;
   updateDateDisplay(today);
@@ -1993,6 +2056,7 @@ function editRecord(id) {
   $("editAddInfo").value = r.add_info || "";
   const loc = r.location || "DH1";
   const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6","L3-Optics Cage"];
+  let resolvedLoc = loc;
   if (knownLocs.includes(loc)) {
     const radio = document.querySelector('input[name="editLocation"][value="' + loc + '"]');
     if (radio) radio.checked = true;
@@ -2002,7 +2066,9 @@ function editRecord(id) {
     document.getElementById("edit-loc-Other").checked = true;
     $("editLocOther").style.display = "inline-block";
     $("editLocOther").value = loc;
+    resolvedLoc = "Other";
   }
+  populateRackOptions($("editRackSelect"), resolvedLoc, r.rack || "");
   $("editTitle").textContent = "EDIT RECORD #" + r.id;
   // Load existing attachments into edit buffer (metadata only; blob fetched on preview)
   stagedEdit = getAttachmentsForTask(r.id).map(a => ({
@@ -2017,7 +2083,8 @@ async function submitEdit() {
   const desc = $("editDescription").value.trim();
   if (!desc) { toast("Description is required.", "error"); $("editDescription").focus(); return; }
   updateTask(id, $("editDate").value, desc, getEditLocation(),
-             $("editDcCode").value.trim() || "EVI01", $("editAddInfo").value.trim());
+             $("editDcCode").value.trim() || "EVI01", $("editAddInfo").value.trim(),
+             getEditRack());
   try { await reconcileEditAttachments(id); await refreshAttachmentsCache(); } catch (e) {}
   toast("Record #" + id + " updated successfully!", "success");
   closeEdit();
@@ -2072,7 +2139,7 @@ function renderTable(rows) {
       <td class="center">${r.entry_date}</td>
       <td class="center">${r.day_name}</td>
       <td class="desc-col">${linkify(r.description||"")}</td>
-      <td class="center">${r.location||""}</td>
+      <td class="center">${r.location||""}${r.rack ? " / " + r.rack : ""}</td>
       <td class="center">${r.dc_code||"EVI01"}</td>
       <td class="info-col">${linkify(r.add_info||"")}</td>
       <td class="center">${renderAttCell(r.id)}</td>
@@ -2160,7 +2227,7 @@ function loadCurrentWeek() {
     g.tasks.forEach((t, i) => {
       html += '<div class="day-card-row">';
       html += '<span class="day-card-num">' + (i+1) + '</span>';
-      html += '<span class="day-card-loc">' + esc(t.location||"") + '</span>';
+      html += '<span class="day-card-loc">' + esc(t.location||"") + (t.rack ? ' / ' + esc(t.rack) : '') + '</span>';
       html += '<span class="day-card-desc">' + linkify(t.description||"") + '</span>';
       if (t.add_info) html += '<span class="day-card-info">' + linkify(t.add_info) + '</span>';
       const attHtml = renderAttCell(t.id);
@@ -2257,7 +2324,7 @@ function showWeeklySummary() {
     html += '<div class="day-tasks">';
     day.tasks.forEach(t => {
       html += '<div class="day-task-row">';
-      html += '<span class="task-loc">' + esc(t.location||"") + '</span>';
+      html += '<span class="task-loc">' + esc(t.location||"") + (t.rack ? ' / ' + esc(t.rack) : '') + '</span>';
       html += '<span class="task-dc">' + esc(t.dc_code||"EVI01") + '</span>';
       html += '<span class="task-desc">' + linkify(t.description||"") + '</span>';
       if (t.add_info) html += '<span class="task-info">' + linkify(t.add_info) + '</span>';
@@ -2627,7 +2694,7 @@ function exportPDF() {
       <tr>
         <td>${esc(t.entry_date)}</td>
         <td>${esc(t.day_of_week || "")}</td>
-        <td>${esc(t.location || "")}</td>
+        <td>${esc(t.location || "")}${t.rack ? " / " + esc(t.rack) : ""}</td>
         <td>${esc(t.dc_code || "")}</td>
         <td>${esc(t.description || "")}</td>
         <td>${esc(t.add_info || "")}</td>
@@ -2794,8 +2861,15 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.2.0";
+const CURRENT_VERSION = "v1.3.0";
 const VERSION_HISTORY = [
+  { version: "v1.3.0", date: "2026-04-30", features: [
+      "Added a Rack dropdown next to the Location dropdown on the SAVE ENTRY form (and a matching Rack dropdown in the EDIT modal)",
+      "Rack options activate based on the selected location: DH1 → R001-R320, DH2 → R001-R260, DH3 → R001-R200, DH4 → R001-R120",
+      "DH5 and DH6 show \"Coming in a later version\" placeholder and stay disabled",
+      "L3-Optics Cage and Other locations have no rack list (rack stays disabled)",
+      "Rack value is persisted on the record (new field) and rendered inline with location in the All Records table, Weekly View, Weekly Summary, and PDF export — e.g. \"DH1 / R042\""
+  ]},
   { version: "v1.2.0", date: "2026-04-29", features: [
       "Removed the TEMPLATES feature (button, modal, save/load/delete handlers, and localStorage key)",
       "Removed the BULK ENTRY feature (button, modal, location radios, and save handler)",
