@@ -29,6 +29,10 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.3.1 (2026-05-01)
+**Design:**
+- Added a **mirror/shine sweep** effect to the date and day tabs in the date display — matches the existing button shine on hover (soft diagonal highlight glides across, plus a subtle lift)
+
 ### v1.3.0 (2026-04-30)
 **New Features:**
 - Added a **Rack** dropdown next to the Location dropdown on the SAVE ENTRY form (and a matching Rack dropdown in the EDIT modal)

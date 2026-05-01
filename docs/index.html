@@ -572,16 +572,45 @@
   input[type="date"]:focus { outline: none; border-color: var(--blue); box-shadow: var(--ring); }
 
   .date-display { gap: 10px; margin-top: 14px; }
+  .date-display .date-val,
+  .date-display .day-val {
+    padding: 10px 16px; border-radius: var(--r-sm); font-size: 13px; letter-spacing: 0.04em;
+    box-shadow: var(--shadow-1),
+                inset 0 1px 0 rgba(255,255,255,0.28),
+                inset 0 -10px 20px -10px rgba(0,0,0,0.18);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.15s ease;
+  }
   .date-display .date-val {
     background: linear-gradient(135deg, var(--orange), color-mix(in srgb, var(--orange) 70%, #000));
-    padding: 10px 16px; border-radius: var(--r-sm); font-size: 13px; letter-spacing: 0.04em;
-    box-shadow: var(--shadow-1);
   }
   .date-display .day-val {
     background: linear-gradient(135deg, var(--navy), color-mix(in srgb, var(--navy) 70%, #000));
-    padding: 10px 16px; border-radius: var(--r-sm); font-size: 13px; letter-spacing: 0.04em;
-    box-shadow: var(--shadow-1);
   }
+  .date-display .date-val::before,
+  .date-display .day-val::before {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -120%;
+    width: 60%;
+    background: linear-gradient(115deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.15) 40%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0.15) 60%,
+      rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    pointer-events: none;
+    z-index: 1;
+    transition: left 0.6s ease;
+  }
+  .date-display .date-val:hover::before,
+  .date-display .day-val:hover::before { left: 120%; }
+  .date-display .date-val:hover,
+  .date-display .day-val:hover { transform: translateY(-1px); filter: brightness(1.04); }
 
   /* ── Form rows ─────────────────────────────────────────────────────── */
   .form-row { gap: 12px; margin-bottom: 12px; align-items: center; }
@@ -2861,8 +2890,11 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.3.0";
+const CURRENT_VERSION = "v1.3.1";
 const VERSION_HISTORY = [
+  { version: "v1.3.1", date: "2026-05-01", features: [
+      "Added a mirror/shine sweep effect to the date and day tabs in the date display — matches the existing button shine on hover (soft diagonal highlight glides across, plus a subtle lift)"
+  ]},
   { version: "v1.3.0", date: "2026-04-30", features: [
       "Added a Rack dropdown next to the Location dropdown on the SAVE ENTRY form (and a matching Rack dropdown in the EDIT modal)",
       "Rack options activate based on the selected location: DH1 → R001-R320, DH2 → R001-R260, DH3 → R001-R200, DH4 → R001-R120",
