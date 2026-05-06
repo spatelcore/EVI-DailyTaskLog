@@ -975,6 +975,30 @@
   .ac-item:hover { background: color-mix(in srgb, var(--blue) 12%, transparent); }
   .ac-item mark { background: var(--orange); border-radius: 4px; padding: 0 4px; }
 
+  /* ── Searchable combobox (Rack) ────────────────────────────────────── */
+  .combo-wrap { position: relative; display: inline-block; min-width: 140px; vertical-align: middle; }
+  .combo-input {
+    width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 14px;
+    border: 2px solid var(--blue); border-radius: 5px;
+    background: var(--input-bg); color: var(--text); font-weight: 600;
+  }
+  .combo-input:focus { outline: none; box-shadow: var(--ring); }
+  .combo-input:disabled { opacity: 0.55; cursor: not-allowed; }
+  .combo-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
+    max-height: 240px; overflow-y: auto;
+    background: var(--card-bg); border: 1px solid var(--hairline);
+    border-radius: var(--r-sm); box-shadow: var(--shadow-2);
+    display: none;
+  }
+  .combo-list.open { display: block; }
+  .combo-item { padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text); }
+  .combo-item:hover, .combo-item.active {
+    background: color-mix(in srgb, var(--blue) 14%, transparent);
+  }
+  .combo-empty { padding: 10px 12px; font-size: 12px; color: var(--ink-soft); font-style: italic; }
+  .combo-input.thin { border-width: 1px; border-color: var(--input-border); border-radius: 4px; font-weight: 500; }
+
   /* ── Settings theme grid ───────────────────────────────────────────── */
   .theme-option {
     border: 1px solid var(--hairline); border-radius: var(--r-md); padding: 12px 14px;
@@ -1040,9 +1064,15 @@
             <option value="L3-Optics Cage">L3-Optics Cage</option>
             <option value="Other">Others</option>
           </select>
-          <select id="rackSelect" disabled style="padding:8px 10px; font-size:14px; border:2px solid var(--blue); border-radius:5px; background:var(--input-bg); color:var(--text); min-width:140px;">
-            <option value="">— Select rack —</option>
-          </select>
+          <span class="combo-wrap" id="rackCombo" style="min-width:150px;">
+            <input type="text" class="combo-input" id="rackInput" placeholder="— Select rack —"
+                   autocomplete="off" disabled
+                   oninput="comboFilter('rack')"
+                   onfocus="comboOpen('rack')"
+                   onblur="comboBlurClose('rack')"
+                   onkeydown="comboKey(event,'rack')">
+            <div class="combo-list" id="rackList"></div>
+          </span>
           <select id="ruSelect" disabled style="padding:8px 10px; font-size:14px; border:2px solid var(--blue); border-radius:5px; background:var(--input-bg); color:var(--text); min-width:130px;">
             <option value="">— Select RU —</option>
           </select>
@@ -1208,9 +1238,15 @@
       </div>
       <div class="form-row">
         <label>Rack</label>
-        <select id="editRackSelect" disabled style="padding:8px 10px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); min-width:160px;">
-          <option value="">— Select rack —</option>
-        </select>
+        <span class="combo-wrap" id="editRackCombo" style="min-width:170px;">
+          <input type="text" class="combo-input thin" id="editRackInput" placeholder="— Select rack —"
+                 autocomplete="off" disabled
+                 oninput="comboFilter('editRack')"
+                 onfocus="comboOpen('editRack')"
+                 onblur="comboBlurClose('editRack')"
+                 onkeydown="comboKey(event,'editRack')">
+          <div class="combo-list" id="editRackList"></div>
+        </span>
         <select id="editRuSelect" disabled style="padding:8px 10px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); min-width:140px; margin-left:8px;">
           <option value="">— Select RU —</option>
         </select>
@@ -1910,42 +1946,121 @@ function getLocation() {
 
 const RACK_LIMITS = { DH1: 320, DH2: 260, DH3: 200, DH4: 120 };
 
-function populateRackOptions(targetSelect, loc, currentVal) {
+const _comboReg = {
+  rack:     { inputId: "rackInput",     listId: "rackList",     items: [], placeholder: "— Select rack —" },
+  editRack: { inputId: "editRackInput", listId: "editRackList", items: [], placeholder: "— Select rack —" },
+};
+
+function comboSet(name, items, placeholder, currentVal) {
+  const c = _comboReg[name]; if (!c) return;
+  c.items = items.slice();
+  c.placeholder = placeholder;
+  const inp = document.getElementById(c.inputId);
+  if (!inp) return;
+  inp.placeholder = placeholder;
+  inp.value = (currentVal && items.includes(currentVal)) ? currentVal : "";
+  inp.disabled = items.length === 0;
+  comboCloseByName(name);
+}
+
+function comboFilteredItems(name) {
+  const c = _comboReg[name];
+  const inp = document.getElementById(c.inputId);
+  const q = (inp.value || "").trim();
+  if (!q) return c.items;
+  if (/^\d+$/.test(q)) {
+    return c.items.filter(v => {
+      const m = v.match(/(\d+)/);
+      return m && String(parseInt(m[1], 10)).startsWith(q);
+    });
+  }
+  const ql = q.toUpperCase();
+  return c.items.filter(v => v.toUpperCase().includes(ql));
+}
+
+function comboRender(name) {
+  const c = _comboReg[name];
+  const list = document.getElementById(c.listId); if (!list) return;
+  const visible = comboFilteredItems(name);
+  if (!visible.length) {
+    list.innerHTML = '<div class="combo-empty">No matches</div>';
+    return;
+  }
+  const esc = s => s.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+  list.innerHTML = visible.slice(0, 400).map(v =>
+    `<div class="combo-item" data-val="${esc(v)}" onmousedown="event.preventDefault();comboPick('${name}','${esc(v)}')">${esc(v)}</div>`
+  ).join("");
+}
+
+function comboOpen(name) {
+  const c = _comboReg[name]; if (!c) return;
+  const inp = document.getElementById(c.inputId);
+  if (!inp || inp.disabled) return;
+  comboRender(name);
+  document.getElementById(c.listId).classList.add("open");
+}
+
+function comboFilter(name) {
+  comboRender(name);
+  document.getElementById(_comboReg[name].listId).classList.add("open");
+}
+
+function comboCloseByName(name) {
+  const list = document.getElementById(_comboReg[name].listId);
+  if (list) list.classList.remove("open");
+}
+
+function comboBlurClose(name) {
+  setTimeout(() => {
+    const c = _comboReg[name];
+    const inp = document.getElementById(c.inputId);
+    if (inp && inp.value && !c.items.includes(inp.value.trim())) inp.value = "";
+    comboCloseByName(name);
+  }, 150);
+}
+
+function comboPick(name, val) {
+  const c = _comboReg[name];
+  const inp = document.getElementById(c.inputId);
+  inp.value = val;
+  comboCloseByName(name);
+  inp.blur();
+}
+
+function comboKey(e, name) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const visible = comboFilteredItems(name);
+    if (visible.length) comboPick(name, visible[0]);
+  } else if (e.key === "Escape") {
+    comboCloseByName(name);
+  }
+}
+
+function comboGetValue(name) {
+  const c = _comboReg[name];
+  const inp = document.getElementById(c.inputId);
+  if (!inp || inp.disabled) return "";
+  const v = (inp.value || "").trim();
+  return c.items.includes(v) ? v : "";
+}
+
+function populateRackOptions(name, loc, currentVal) {
   const max = RACK_LIMITS[loc];
-  targetSelect.innerHTML = "";
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
+  let items = [];
+  let placeholder = "— Select rack —";
   if (max) {
-    placeholder.textContent = "— Select rack —";
-    targetSelect.disabled = false;
+    for (let i = 1; i <= max; i++) items.push("R" + String(i).padStart(3, "0"));
   } else if (loc === "DH5" || loc === "DH6") {
-    placeholder.textContent = "Coming in a later version";
-    targetSelect.disabled = true;
+    placeholder = "Coming in a later version";
   } else {
-    placeholder.textContent = "— N/A —";
-    targetSelect.disabled = true;
+    placeholder = "— N/A —";
   }
-  targetSelect.appendChild(placeholder);
-  if (max) {
-    for (let i = 1; i <= max; i++) {
-      const opt = document.createElement("option");
-      opt.value = "R" + String(i).padStart(3, "0");
-      opt.textContent = opt.value;
-      targetSelect.appendChild(opt);
-    }
-  }
-  targetSelect.value = (currentVal && max) ? currentVal : "";
+  comboSet(name, items, placeholder, currentVal);
 }
 
-function getRack() {
-  const sel = $("rackSelect");
-  return (sel && !sel.disabled) ? sel.value : "";
-}
-
-function getEditRack() {
-  const sel = $("editRackSelect");
-  return (sel && !sel.disabled) ? sel.value : "";
-}
+function getRack()     { return comboGetValue("rack"); }
+function getEditRack() { return comboGetValue("editRack"); }
 
 const RU_MAX = 52;
 
@@ -2015,7 +2130,6 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
 (function() {
   const sel = document.getElementById("locSelect");
   const other = document.getElementById("locOther");
-  const rack = document.getElementById("rackSelect");
   const ru = document.getElementById("ruSelect");
   if (sel) {
     sel.addEventListener("change", () => {
@@ -2023,7 +2137,7 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
       other.style.display = isOther ? "inline-block" : "none";
       if (isOther) other.focus();
       else other.value = "";
-      if (rack) populateRackOptions(rack, sel.value, "");
+      populateRackOptions("rack", sel.value, "");
       if (ru) populateRuOptions(ru, sel.value, "");
       updateSaveEntryDisabled();
     });
@@ -2033,8 +2147,7 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
   document.querySelectorAll('input[name="editLocation"]').forEach(r => {
     r.addEventListener("change", () => {
       if (r.checked) {
-        const editRack = document.getElementById("editRackSelect");
-        if (editRack) populateRackOptions(editRack, r.value, "");
+        populateRackOptions("editRack", r.value, "");
         const editRu = document.getElementById("editRuSelect");
         if (editRu) populateRuOptions(editRu, r.value, "");
       }
@@ -2106,7 +2219,7 @@ function clearForm() {
   $("locSelect").value = "";
   $("locOther").value = "";
   $("locOther").style.display = "none";
-  populateRackOptions($("rackSelect"), "", "");
+  populateRackOptions("rack", "", "");
   populateRuOptions($("ruSelect"), "", "");
   const today = localDateStr();
   $("entryDate").value = today;
@@ -2149,7 +2262,7 @@ function editRecord(id) {
     $("editLocOther").value = loc;
     resolvedLoc = "Other";
   }
-  populateRackOptions($("editRackSelect"), resolvedLoc, r.rack || "");
+  populateRackOptions("editRack", resolvedLoc, r.rack || "");
   populateRuOptions($("editRuSelect"), resolvedLoc, r.ru || "");
   $("editTitle").textContent = "EDIT RECORD #" + r.id;
   // Load existing attachments into edit buffer (metadata only; blob fetched on preview)
@@ -2943,8 +3056,14 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.4.0";
+const CURRENT_VERSION = "v1.4.1";
 const VERSION_HISTORY = [
+  { version: "v1.4.1", date: "2026-05-06", features: [
+      "Rack dropdown is now a searchable combobox — click and type to filter",
+      "Type a digit to list every rack whose number STARTS with that digit (e.g., \"1\" → R001, R010-R019, R100-R199; \"12\" → R012, R120-R129)",
+      "Letters / mixed input still match anywhere in the rack name; Enter picks the first match, Esc closes",
+      "Same searchable behavior in the EDIT modal's Rack field"
+  ]},
   { version: "v1.4.0", date: "2026-05-04", features: [
       "Added a new RU dropdown next to the Rack dropdown on the SAVE ENTRY form (and a matching RU dropdown in the EDIT modal)",
       "RU options run from RU01 to RU52 and activate whenever Rack is active (DH1–DH4)",

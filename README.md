@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.4.1 (2026-05-06)
+**Improvements:**
+- **Rack dropdown is now a searchable combobox** — click and type to filter
+- Type a digit to list every rack whose number **starts with** that digit (e.g., `1` → R001, R010-R019, R100-R199; `12` → R012, R120-R129)
+- Letters / mixed input still match anywhere in the rack name; **Enter** picks the first match, **Esc** closes
+- Same searchable behavior in the EDIT modal's Rack field
+
 ### v1.4.0 (2026-05-04)
 **New Features:**
 - Added a new **RU** dropdown next to the Rack dropdown on the SAVE ENTRY form (and a matching RU dropdown in the EDIT modal)
