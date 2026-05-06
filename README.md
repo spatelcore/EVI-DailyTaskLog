@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.4.2 (2026-05-06)
+**Improvements:**
+- Extended the **searchable combobox** to the **RU dropdown** — same digit-prefix filtering
+- Type a digit to list every RU whose number **starts with** that digit (e.g., `1` → RU01, RU10-RU19; `5` → RU05, RU50-RU52; `12` → RU12)
+- Letters / mixed input still match anywhere in the RU name; **Enter** picks the first match, **Esc** closes
+- Same searchable behavior in the EDIT modal's RU field
+
 ### v1.4.1 (2026-05-06)
 **Improvements:**
 - **Rack dropdown is now a searchable combobox** — click and type to filter

@@ -1073,9 +1073,15 @@
                    onkeydown="comboKey(event,'rack')">
             <div class="combo-list" id="rackList"></div>
           </span>
-          <select id="ruSelect" disabled style="padding:8px 10px; font-size:14px; border:2px solid var(--blue); border-radius:5px; background:var(--input-bg); color:var(--text); min-width:130px;">
-            <option value="">— Select RU —</option>
-          </select>
+          <span class="combo-wrap" id="ruCombo" style="min-width:140px;">
+            <input type="text" class="combo-input" id="ruInput" placeholder="— Select RU —"
+                   autocomplete="off" disabled
+                   oninput="comboFilter('ru')"
+                   onfocus="comboOpen('ru')"
+                   onblur="comboBlurClose('ru')"
+                   onkeydown="comboKey(event,'ru')">
+            <div class="combo-list" id="ruList"></div>
+          </span>
           <input type="text" id="locOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
       </div>
@@ -1247,9 +1253,15 @@
                  onkeydown="comboKey(event,'editRack')">
           <div class="combo-list" id="editRackList"></div>
         </span>
-        <select id="editRuSelect" disabled style="padding:8px 10px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); min-width:140px; margin-left:8px;">
-          <option value="">— Select RU —</option>
-        </select>
+        <span class="combo-wrap" id="editRuCombo" style="min-width:150px; margin-left:8px;">
+          <input type="text" class="combo-input thin" id="editRuInput" placeholder="— Select RU —"
+                 autocomplete="off" disabled
+                 oninput="comboFilter('editRu')"
+                 onfocus="comboOpen('editRu')"
+                 onblur="comboBlurClose('editRu')"
+                 onkeydown="comboKey(event,'editRu')">
+          <div class="combo-list" id="editRuList"></div>
+        </span>
       </div>
       <div class="form-row">
         <label>DC Code</label>
@@ -1949,6 +1961,8 @@ const RACK_LIMITS = { DH1: 320, DH2: 260, DH3: 200, DH4: 120 };
 const _comboReg = {
   rack:     { inputId: "rackInput",     listId: "rackList",     items: [], placeholder: "— Select rack —" },
   editRack: { inputId: "editRackInput", listId: "editRackList", items: [], placeholder: "— Select rack —" },
+  ru:       { inputId: "ruInput",       listId: "ruList",       items: [], placeholder: "— Select RU —" },
+  editRu:   { inputId: "editRuInput",   listId: "editRuList",   items: [], placeholder: "— Select RU —" },
 };
 
 function comboSet(name, items, placeholder, currentVal) {
@@ -2064,42 +2078,22 @@ function getEditRack() { return comboGetValue("editRack"); }
 
 const RU_MAX = 52;
 
-function populateRuOptions(targetSelect, loc, currentVal) {
+function populateRuOptions(name, loc, currentVal) {
   const enabled = !!RACK_LIMITS[loc];
-  targetSelect.innerHTML = "";
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
+  let items = [];
+  let placeholder = "— Select RU —";
   if (enabled) {
-    placeholder.textContent = "— Select RU —";
-    targetSelect.disabled = false;
+    for (let i = 1; i <= RU_MAX; i++) items.push("RU" + String(i).padStart(2, "0"));
   } else if (loc === "DH5" || loc === "DH6") {
-    placeholder.textContent = "Coming in a later version";
-    targetSelect.disabled = true;
+    placeholder = "Coming in a later version";
   } else {
-    placeholder.textContent = "— N/A —";
-    targetSelect.disabled = true;
+    placeholder = "— N/A —";
   }
-  targetSelect.appendChild(placeholder);
-  if (enabled) {
-    for (let i = 1; i <= RU_MAX; i++) {
-      const opt = document.createElement("option");
-      opt.value = "RU" + String(i).padStart(2, "0");
-      opt.textContent = opt.value;
-      targetSelect.appendChild(opt);
-    }
-  }
-  targetSelect.value = (currentVal && enabled) ? currentVal : "";
+  comboSet(name, items, placeholder, currentVal);
 }
 
-function getRu() {
-  const sel = $("ruSelect");
-  return (sel && !sel.disabled) ? sel.value : "";
-}
-
-function getEditRu() {
-  const sel = $("editRuSelect");
-  return (sel && !sel.disabled) ? sel.value : "";
-}
+function getRu()     { return comboGetValue("ru"); }
+function getEditRu() { return comboGetValue("editRu"); }
 
 function updateSaveEntryDisabled() {
   const btn = $("saveEntryBtn");
@@ -2130,7 +2124,6 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
 (function() {
   const sel = document.getElementById("locSelect");
   const other = document.getElementById("locOther");
-  const ru = document.getElementById("ruSelect");
   if (sel) {
     sel.addEventListener("change", () => {
       const isOther = sel.value === "Other";
@@ -2138,7 +2131,7 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
       if (isOther) other.focus();
       else other.value = "";
       populateRackOptions("rack", sel.value, "");
-      if (ru) populateRuOptions(ru, sel.value, "");
+      populateRuOptions("ru", sel.value, "");
       updateSaveEntryDisabled();
     });
   }
@@ -2148,8 +2141,7 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
     r.addEventListener("change", () => {
       if (r.checked) {
         populateRackOptions("editRack", r.value, "");
-        const editRu = document.getElementById("editRuSelect");
-        if (editRu) populateRuOptions(editRu, r.value, "");
+        populateRuOptions("editRu", r.value, "");
       }
     });
   });
@@ -2220,7 +2212,7 @@ function clearForm() {
   $("locOther").value = "";
   $("locOther").style.display = "none";
   populateRackOptions("rack", "", "");
-  populateRuOptions($("ruSelect"), "", "");
+  populateRuOptions("ru", "", "");
   const today = localDateStr();
   $("entryDate").value = today;
   updateDateDisplay(today);
@@ -2263,7 +2255,7 @@ function editRecord(id) {
     resolvedLoc = "Other";
   }
   populateRackOptions("editRack", resolvedLoc, r.rack || "");
-  populateRuOptions($("editRuSelect"), resolvedLoc, r.ru || "");
+  populateRuOptions("editRu", resolvedLoc, r.ru || "");
   $("editTitle").textContent = "EDIT RECORD #" + r.id;
   // Load existing attachments into edit buffer (metadata only; blob fetched on preview)
   stagedEdit = getAttachmentsForTask(r.id).map(a => ({
@@ -3056,8 +3048,14 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.4.1";
+const CURRENT_VERSION = "v1.4.2";
 const VERSION_HISTORY = [
+  { version: "v1.4.2", date: "2026-05-06", features: [
+      "Extended the searchable combobox to the RU dropdown — same digit-prefix filtering",
+      "Type a digit to list every RU whose number STARTS with that digit (e.g., \"1\" → RU01, RU10-RU19; \"5\" → RU05, RU50-RU52; \"12\" → RU12)",
+      "Letters / mixed input still match anywhere in the RU name; Enter picks the first match, Esc closes",
+      "Same searchable behavior in the EDIT modal's RU field"
+  ]},
   { version: "v1.4.1", date: "2026-05-06", features: [
       "Rack dropdown is now a searchable combobox — click and type to filter",
       "Type a digit to list every rack whose number STARTS with that digit (e.g., \"1\" → R001, R010-R019, R100-R199; \"12\" → R012, R120-R129)",
