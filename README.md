@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.4.0 (2026-05-04)
+**New Features:**
+- Added a new **RU** dropdown next to the Rack dropdown on the SAVE ENTRY form (and a matching RU dropdown in the EDIT modal)
+- RU options run from **RU01 to RU52** and activate whenever Rack is active (DH1–DH4)
+- DH5 / DH6 show "Coming in a later version" placeholder; L3-Optics Cage / Other locations have no RU list
+- RU value is persisted on the record and rendered inline with location/rack (e.g. `DH1 / R042 / RU05`) in the All Records table, Weekly View, Weekly Summary, and PDF export
+
 ### v1.3.1 (2026-05-01)
 **Design:**
 - Added a **mirror/shine sweep** effect to the date and day tabs in the date display — matches the existing button shine on hover (soft diagonal highlight glides across, plus a subtle lift)
