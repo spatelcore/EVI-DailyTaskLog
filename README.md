@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.5.0 (2026-05-06)
+**New Features:**
+- Added a new **Node** searchable combobox next to RU on the SAVE ENTRY form (and a matching Node combobox in the EDIT modal)
+- Node options run from **Node01 to Node16** and activate whenever Rack/RU are active (DH1–DH4)
+- Same digit-prefix filtering as Rack/RU: type `1` → Node01, Node10-Node16; `2` → Node02; `12` → Node12
+- Node value is persisted on the record and rendered inline with location/rack/RU (e.g. `DH1 / R042 / RU05 / Node07`) in the All Records table, Weekly View, Weekly Summary, and PDF export
+
 ### v1.4.2 (2026-05-06)
 **Improvements:**
 - Extended the **searchable combobox** to the **RU dropdown** — same digit-prefix filtering

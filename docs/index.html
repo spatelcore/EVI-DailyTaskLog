@@ -1082,6 +1082,15 @@
                    onkeydown="comboKey(event,'ru')">
             <div class="combo-list" id="ruList"></div>
           </span>
+          <span class="combo-wrap" id="nodeCombo" style="min-width:150px;">
+            <input type="text" class="combo-input" id="nodeInput" placeholder="— Select Node —"
+                   autocomplete="off" disabled
+                   oninput="comboFilter('node')"
+                   onfocus="comboOpen('node')"
+                   onblur="comboBlurClose('node')"
+                   onkeydown="comboKey(event,'node')">
+            <div class="combo-list" id="nodeList"></div>
+          </span>
           <input type="text" id="locOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
       </div>
@@ -1261,6 +1270,15 @@
                  onblur="comboBlurClose('editRu')"
                  onkeydown="comboKey(event,'editRu')">
           <div class="combo-list" id="editRuList"></div>
+        </span>
+        <span class="combo-wrap" id="editNodeCombo" style="min-width:160px; margin-left:8px;">
+          <input type="text" class="combo-input thin" id="editNodeInput" placeholder="— Select Node —"
+                 autocomplete="off" disabled
+                 oninput="comboFilter('editNode')"
+                 onfocus="comboOpen('editNode')"
+                 onblur="comboBlurClose('editNode')"
+                 onkeydown="comboKey(event,'editNode')">
+          <div class="combo-list" id="editNodeList"></div>
         </span>
       </div>
       <div class="form-row">
@@ -1595,7 +1613,7 @@ function repairWeekNumbers() {
   return fixed;
 }
 
-function addTask(entry_date, description, location, dc_code, add_info, rack, ru) {
+function addTask(entry_date, description, location, dc_code, add_info, rack, ru, node) {
   const tasks = loadTasks();
   const d = new Date(entry_date + "T00:00:00");
   const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -1608,6 +1626,7 @@ function addTask(entry_date, description, location, dc_code, add_info, rack, ru)
     location: location,
     rack: rack || "",
     ru: ru || "",
+    node: node || "",
     dc_code: dc_code || "EVI01",
     add_info: add_info || "",
     week_number: getWeekNumber(d),
@@ -1625,7 +1644,7 @@ function getTask(id) {
   return loadTasks().find(t => t.id === id) || null;
 }
 
-function updateTask(id, entry_date, description, location, dc_code, add_info, rack, ru) {
+function updateTask(id, entry_date, description, location, dc_code, add_info, rack, ru, node) {
   const tasks = loadTasks();
   const idx = tasks.findIndex(t => t.id === id);
   if (idx === -1) return false;
@@ -1637,6 +1656,7 @@ function updateTask(id, entry_date, description, location, dc_code, add_info, ra
   tasks[idx].location = location;
   tasks[idx].rack = rack || "";
   tasks[idx].ru = ru || "";
+  tasks[idx].node = node || "";
   tasks[idx].dc_code = dc_code || "EVI01";
   tasks[idx].add_info = add_info || "";
   tasks[idx].week_number = getWeekNumber(d);
@@ -1963,6 +1983,8 @@ const _comboReg = {
   editRack: { inputId: "editRackInput", listId: "editRackList", items: [], placeholder: "— Select rack —" },
   ru:       { inputId: "ruInput",       listId: "ruList",       items: [], placeholder: "— Select RU —" },
   editRu:   { inputId: "editRuInput",   listId: "editRuList",   items: [], placeholder: "— Select RU —" },
+  node:     { inputId: "nodeInput",     listId: "nodeList",     items: [], placeholder: "— Select Node —" },
+  editNode: { inputId: "editNodeInput", listId: "editNodeList", items: [], placeholder: "— Select Node —" },
 };
 
 function comboSet(name, items, placeholder, currentVal) {
@@ -2095,6 +2117,25 @@ function populateRuOptions(name, loc, currentVal) {
 function getRu()     { return comboGetValue("ru"); }
 function getEditRu() { return comboGetValue("editRu"); }
 
+const NODE_MAX = 16;
+
+function populateNodeOptions(name, loc, currentVal) {
+  const enabled = !!RACK_LIMITS[loc];
+  let items = [];
+  let placeholder = "— Select Node —";
+  if (enabled) {
+    for (let i = 1; i <= NODE_MAX; i++) items.push("Node" + String(i).padStart(2, "0"));
+  } else if (loc === "DH5" || loc === "DH6") {
+    placeholder = "Coming in a later version";
+  } else {
+    placeholder = "— N/A —";
+  }
+  comboSet(name, items, placeholder, currentVal);
+}
+
+function getNode()     { return comboGetValue("node"); }
+function getEditNode() { return comboGetValue("editNode"); }
+
 function updateSaveEntryDisabled() {
   const btn = $("saveEntryBtn");
   if (!btn) return;
@@ -2132,6 +2173,7 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
       else other.value = "";
       populateRackOptions("rack", sel.value, "");
       populateRuOptions("ru", sel.value, "");
+      populateNodeOptions("node", sel.value, "");
       updateSaveEntryDisabled();
     });
   }
@@ -2142,6 +2184,7 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
       if (r.checked) {
         populateRackOptions("editRack", r.value, "");
         populateRuOptions("editRu", r.value, "");
+        populateNodeOptions("editNode", r.value, "");
       }
     });
   });
@@ -2156,7 +2199,7 @@ async function saveEntry() {
   const rowId = addTask(
     $("entryDate").value, desc, loc,
     $("dcCode").value.trim() || "EVI01", $("addInfo").value.trim(),
-    getRack(), getRu()
+    getRack(), getRu(), getNode()
   );
   if (stagedAdd.length) {
     await persistStaged(rowId, stagedAdd);
@@ -2213,6 +2256,7 @@ function clearForm() {
   $("locOther").style.display = "none";
   populateRackOptions("rack", "", "");
   populateRuOptions("ru", "", "");
+  populateNodeOptions("node", "", "");
   const today = localDateStr();
   $("entryDate").value = today;
   updateDateDisplay(today);
@@ -2256,6 +2300,7 @@ function editRecord(id) {
   }
   populateRackOptions("editRack", resolvedLoc, r.rack || "");
   populateRuOptions("editRu", resolvedLoc, r.ru || "");
+  populateNodeOptions("editNode", resolvedLoc, r.node || "");
   $("editTitle").textContent = "EDIT RECORD #" + r.id;
   // Load existing attachments into edit buffer (metadata only; blob fetched on preview)
   stagedEdit = getAttachmentsForTask(r.id).map(a => ({
@@ -2271,7 +2316,7 @@ async function submitEdit() {
   if (!desc) { toast("Description is required.", "error"); $("editDescription").focus(); return; }
   updateTask(id, $("editDate").value, desc, getEditLocation(),
              $("editDcCode").value.trim() || "EVI01", $("editAddInfo").value.trim(),
-             getEditRack(), getEditRu());
+             getEditRack(), getEditRu(), getEditNode());
   try { await reconcileEditAttachments(id); await refreshAttachmentsCache(); } catch (e) {}
   toast("Record #" + id + " updated successfully!", "success");
   closeEdit();
@@ -2326,7 +2371,7 @@ function renderTable(rows) {
       <td class="center">${r.entry_date}</td>
       <td class="center">${r.day_name}</td>
       <td class="desc-col">${linkify(r.description||"")}</td>
-      <td class="center">${r.location||""}${r.rack ? " / " + r.rack : ""}${r.ru ? " / " + r.ru : ""}</td>
+      <td class="center">${r.location||""}${r.rack ? " / " + r.rack : ""}${r.ru ? " / " + r.ru : ""}${r.node ? " / " + r.node : ""}</td>
       <td class="center">${r.dc_code||"EVI01"}</td>
       <td class="info-col">${linkify(r.add_info||"")}</td>
       <td class="center">${renderAttCell(r.id)}</td>
@@ -2414,7 +2459,7 @@ function loadCurrentWeek() {
     g.tasks.forEach((t, i) => {
       html += '<div class="day-card-row">';
       html += '<span class="day-card-num">' + (i+1) + '</span>';
-      html += '<span class="day-card-loc">' + esc(t.location||"") + (t.rack ? ' / ' + esc(t.rack) : '') + (t.ru ? ' / ' + esc(t.ru) : '') + '</span>';
+      html += '<span class="day-card-loc">' + esc(t.location||"") + (t.rack ? ' / ' + esc(t.rack) : '') + (t.ru ? ' / ' + esc(t.ru) : '') + (t.node ? ' / ' + esc(t.node) : '') + '</span>';
       html += '<span class="day-card-desc">' + linkify(t.description||"") + '</span>';
       if (t.add_info) html += '<span class="day-card-info">' + linkify(t.add_info) + '</span>';
       const attHtml = renderAttCell(t.id);
@@ -2511,7 +2556,7 @@ function showWeeklySummary() {
     html += '<div class="day-tasks">';
     day.tasks.forEach(t => {
       html += '<div class="day-task-row">';
-      html += '<span class="task-loc">' + esc(t.location||"") + (t.rack ? ' / ' + esc(t.rack) : '') + (t.ru ? ' / ' + esc(t.ru) : '') + '</span>';
+      html += '<span class="task-loc">' + esc(t.location||"") + (t.rack ? ' / ' + esc(t.rack) : '') + (t.ru ? ' / ' + esc(t.ru) : '') + (t.node ? ' / ' + esc(t.node) : '') + '</span>';
       html += '<span class="task-dc">' + esc(t.dc_code||"EVI01") + '</span>';
       html += '<span class="task-desc">' + linkify(t.description||"") + '</span>';
       if (t.add_info) html += '<span class="task-info">' + linkify(t.add_info) + '</span>';
@@ -2881,7 +2926,7 @@ function exportPDF() {
       <tr>
         <td>${esc(t.entry_date)}</td>
         <td>${esc(t.day_of_week || "")}</td>
-        <td>${esc(t.location || "")}${t.rack ? " / " + esc(t.rack) : ""}${t.ru ? " / " + esc(t.ru) : ""}</td>
+        <td>${esc(t.location || "")}${t.rack ? " / " + esc(t.rack) : ""}${t.ru ? " / " + esc(t.ru) : ""}${t.node ? " / " + esc(t.node) : ""}</td>
         <td>${esc(t.dc_code || "")}</td>
         <td>${esc(t.description || "")}</td>
         <td>${esc(t.add_info || "")}</td>
@@ -3048,8 +3093,14 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.4.2";
+const CURRENT_VERSION = "v1.5.0";
 const VERSION_HISTORY = [
+  { version: "v1.5.0", date: "2026-05-06", features: [
+      "Added a new Node searchable combobox next to RU on the SAVE ENTRY form (and a matching Node combobox in the EDIT modal)",
+      "Node options run from Node01 to Node16 and activate whenever Rack/RU are active (DH1–DH4)",
+      "Same digit-prefix filtering as Rack/RU: type \"1\" → Node01, Node10-Node16; \"2\" → Node02; \"12\" → Node12",
+      "Node value is persisted on the record and rendered inline with location/rack/RU in the All Records table, Weekly View, Weekly Summary, and PDF export — e.g. \"DH1 / R042 / RU05 / Node07\""
+  ]},
   { version: "v1.4.2", date: "2026-05-06", features: [
       "Extended the searchable combobox to the RU dropdown — same digit-prefix filtering",
       "Type a digit to list every RU whose number STARTS with that digit (e.g., \"1\" → RU01, RU10-RU19; \"5\" → RU05, RU50-RU52; \"12\" → RU12)",
