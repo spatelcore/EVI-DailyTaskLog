@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.5.1 (2026-05-08)
+**Improvements:**
+- **Recurring Tasks** now support an optional **End Date** — generation stops on (and includes) that date
+- Leave End Date blank for an open-ended rule (existing rules behave unchanged)
+- End Date is shown in the rule list when set, e.g. `Daily · Start: 2026-05-01 · End: 2026-05-31`
+- Form validates End Date is on or after Start Date
+
 ### v1.5.0 (2026-05-06)
 **New Features:**
 - Added a new **Node** searchable combobox next to RU on the SAVE ENTRY form (and a matching Node combobox in the EDIT modal)

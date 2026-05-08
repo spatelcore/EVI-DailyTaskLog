@@ -1514,7 +1514,11 @@
         <label>Start Date</label>
         <input type="date" id="ruleStartDate" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
       </div>
-      <div class="bulk-hint">Records auto-generate from start date onward on each app load.</div>
+      <div class="form-row">
+        <label>End Date</label>
+        <input type="date" id="ruleEndDate" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+      </div>
+      <div class="bulk-hint">Records auto-generate from start date through end date (inclusive). Leave end date blank for an open-ended rule.</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-save" onclick="saveRuleNew()">SAVE RULE</button>
@@ -3093,8 +3097,14 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.5.0";
+const CURRENT_VERSION = "v1.5.1";
 const VERSION_HISTORY = [
+  { version: "v1.5.1", date: "2026-05-08", features: [
+      "Recurring Tasks now support an optional End Date — generation stops on (and includes) that date",
+      "Leave End Date blank for an open-ended rule (existing rules behave unchanged)",
+      "End Date is shown in the rule list when set, e.g. \"Daily · Start: 2026-05-01 · End: 2026-05-31\"",
+      "Form validates End Date is on or after Start Date"
+  ]},
   { version: "v1.5.0", date: "2026-05-06", features: [
       "Added a new Node searchable combobox next to RU on the SAVE ENTRY form (and a matching Node combobox in the EDIT modal)",
       "Node options run from Node01 to Node16 and activate whenever Rack/RU are active (DH1–DH4)",
@@ -3351,7 +3361,7 @@ function renderRulesList() {
       + '<button class="act-btn act-del" onclick="deleteRule(' + r.id + ')">DEL</button>'
       + '</div>'
       + '<div class="rule-item-meta">' + esc(r.location) + ' / ' + esc(r.dc_code || 'EVI01') + ' — ' + esc(r.description) + '</div>'
-      + '<div class="rule-item-meta">' + esc(freq) + ' · Start: ' + esc(r.start_date) + '</div>'
+      + '<div class="rule-item-meta">' + esc(freq) + ' · Start: ' + esc(r.start_date) + (r.end_date ? ' · End: ' + esc(r.end_date) : '') + '</div>'
       + '</div>';
   }).join("");
 }
@@ -3366,6 +3376,7 @@ function resetRuleForm() {
   $("ruleLocOther").value = "";
   document.getElementById("ruleFreq-daily").checked = true;
   $("ruleStartDate").value = localDateStr();
+  $("ruleEndDate").value = "";
   [0,1,2,3,4,5,6].forEach(i => {
     const cb = document.getElementById("dow-" + i);
     if (cb) cb.checked = (i >= 1 && i <= 5);
@@ -3389,9 +3400,11 @@ function saveRuleNew() {
   const name = $("ruleName").value.trim();
   const desc = $("ruleDescription").value.trim();
   const start = $("ruleStartDate").value;
+  const end = $("ruleEndDate").value;
   if (!name) { toast("Rule name required.", "error"); return; }
   if (!desc) { toast("Description required.", "error"); return; }
   if (!start) { toast("Start date required.", "error"); return; }
+  if (end && end < start) { toast("End date must be on or after start date.", "error"); return; }
   const freq = document.querySelector('input[name="ruleFreq"]:checked').value;
   const dow = [];
   if (freq === "weekly") {
@@ -3412,6 +3425,7 @@ function saveRuleNew() {
     frequency: freq,
     days_of_week: dow,
     start_date: start,
+    end_date: end || null,
     last_generated: null,
     enabled: true
   });
@@ -3486,7 +3500,9 @@ function processRecurringTasks() {
     } else {
       d = new Date(rule.start_date + "T00:00:00");
     }
-    while (d <= todayDate) {
+    const endDate = rule.end_date ? new Date(rule.end_date + "T00:00:00") : null;
+    const stopDate = endDate && endDate < todayDate ? endDate : todayDate;
+    while (d <= stopDate) {
       const dateStr = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
       const dow = d.getDay();
       const match = rule.frequency === "daily"
