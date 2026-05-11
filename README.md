@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.6.0 (2026-05-11)
+**New Features:**
+- Added a new **WALKTHROUGH** button next to RECURRING on the entry form
+- Opens a popup with **Date** picker, **Data Hall** selection (DH1-DH6), and **AM/PM** shift selection
+- Save creates a record with description auto-filled as `Daily Walkthrough Completed` — shift (AM/PM) is stored in Add. Info, DC Code defaults to `EVI01`
+- Escape key and overlay-click both close the walkthrough popup
+
 ### v1.5.1 (2026-05-08)
 **Improvements:**
 - **Recurring Tasks** now support an optional **End Date** — generation stops on (and includes) that date

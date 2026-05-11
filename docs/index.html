@@ -1125,6 +1125,7 @@
         <button class="btn btn-clear" onclick="clearForm()">CLEAR FORM</button>
         <span class="divider-v"></span>
         <button class="btn btn-blue" onclick="openRecurring()">RECURRING</button>
+        <button class="btn btn-blue" onclick="openWalkthrough()">WALKTHROUGH</button>
       </div>
     </div>
   </div>
@@ -1523,6 +1524,45 @@
     <div class="modal-actions">
       <button class="btn btn-save" onclick="saveRuleNew()">SAVE RULE</button>
       <button class="btn btn-clear" onclick="closeRecurring()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Walkthrough Modal -->
+<div class="modal-overlay" id="walkthroughModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>DAILY WALKTHROUGH</h2>
+      <button class="modal-close" onclick="closeWalkthrough()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Date</label>
+        <input type="date" id="walkthroughDate" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+      </div>
+      <div class="form-row">
+        <label>Data Hall</label>
+        <div class="radio-group">
+          <input type="radio" name="walkthroughLocation" id="wt-loc-DH1" value="DH1" checked><label for="wt-loc-DH1">DH1</label>
+          <input type="radio" name="walkthroughLocation" id="wt-loc-DH2" value="DH2"><label for="wt-loc-DH2">DH2</label>
+          <input type="radio" name="walkthroughLocation" id="wt-loc-DH3" value="DH3"><label for="wt-loc-DH3">DH3</label>
+          <input type="radio" name="walkthroughLocation" id="wt-loc-DH4" value="DH4"><label for="wt-loc-DH4">DH4</label>
+          <input type="radio" name="walkthroughLocation" id="wt-loc-DH5" value="DH5"><label for="wt-loc-DH5">DH5</label>
+          <input type="radio" name="walkthroughLocation" id="wt-loc-DH6" value="DH6"><label for="wt-loc-DH6">DH6</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Shift</label>
+        <div class="radio-group">
+          <input type="radio" name="walkthroughShift" id="wt-shift-AM" value="AM" checked><label for="wt-shift-AM">AM</label>
+          <input type="radio" name="walkthroughShift" id="wt-shift-PM" value="PM"><label for="wt-shift-PM">PM</label>
+        </div>
+      </div>
+      <div class="bulk-hint">Description will be saved as &ldquo;Daily Walkthrough Completed&rdquo;.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" onclick="saveWalkthrough()">SAVE WALKTHROUGH</button>
+      <button class="btn btn-clear" onclick="closeWalkthrough()">CANCEL</button>
     </div>
   </div>
 </div>
@@ -3076,6 +3116,7 @@ document.addEventListener("keydown", function(e) {
     else if ($("editModal").classList.contains("open")) closeEdit();
     else if ($("summaryModal").classList.contains("open")) closeSummary();
     else if ($("recurringModal").classList.contains("open")) closeRecurring();
+    else if ($("walkthroughModal").classList.contains("open")) closeWalkthrough();
     else if ($("versionModal").classList.contains("open")) closeVersionHistory();
     else if ($("settingsModal").classList.contains("open")) closeSettings();
     else if ($("exportModal").classList.contains("open")) closeExportPicker();
@@ -3097,8 +3138,14 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.5.1";
+const CURRENT_VERSION = "v1.6.0";
 const VERSION_HISTORY = [
+  { version: "v1.6.0", date: "2026-05-11", features: [
+      "Added a new WALKTHROUGH button next to RECURRING on the entry form",
+      "Opens a popup with Date picker, Data Hall selection (DH1-DH6), and AM/PM shift selection",
+      "Save creates a record with description auto-filled as \"Daily Walkthrough Completed\" — shift (AM/PM) is stored in Add. Info, DC Code defaults to EVI01",
+      "Escape key and overlay-click both close the walkthrough popup"
+  ]},
   { version: "v1.5.1", date: "2026-05-08", features: [
       "Recurring Tasks now support an optional End Date — generation stops on (and includes) that date",
       "Leave End Date blank for an open-ended rule (existing rules behave unchanged)",
@@ -3336,6 +3383,31 @@ function openRecurring() {
 }
 function closeRecurring() { $("recurringModal").classList.remove("open"); }
 
+function openWalkthrough() {
+  $("walkthroughDate").value = localDateStr();
+  const dh1 = document.getElementById("wt-loc-DH1"); if (dh1) dh1.checked = true;
+  const am = document.getElementById("wt-shift-AM"); if (am) am.checked = true;
+  $("walkthroughModal").classList.add("open");
+}
+function closeWalkthrough() { $("walkthroughModal").classList.remove("open"); }
+
+function saveWalkthrough() {
+  const date = $("walkthroughDate").value;
+  if (!date) { toast("Please choose a date.", "error"); return; }
+  const locEl = document.querySelector('input[name="walkthroughLocation"]:checked');
+  const shiftEl = document.querySelector('input[name="walkthroughShift"]:checked');
+  const location = locEl ? locEl.value : "DH1";
+  const shift = shiftEl ? shiftEl.value : "AM";
+  const rowId = addTask(
+    date, "Daily Walkthrough Completed", location,
+    "EVI01", shift, "", "", ""
+  );
+  toast("Walkthrough #" + rowId + " saved (" + location + " " + shift + ").", "success");
+  setStatus("SAVED  Walkthrough #" + rowId + " — " + location + " " + shift);
+  closeWalkthrough();
+  refreshActiveTab();
+}
+
 function renderRulesList() {
   const rules = loadRules();
   const container = $("ruleList");
@@ -3530,6 +3602,7 @@ function processRecurringTasks() {
 // Close new modals on overlay click
 document.addEventListener("click", function(e) {
   if (e.target.id === "recurringModal") closeRecurring();
+  if (e.target.id === "walkthroughModal") closeWalkthrough();
   if (e.target.id === "versionModal") closeVersionHistory();
   if (e.target.id === "settingsModal") closeSettings();
   if (e.target.id === "exportModal") closeExportPicker();
