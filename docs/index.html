@@ -998,6 +998,10 @@
   }
   .combo-empty { padding: 10px 12px; font-size: 12px; color: var(--ink-soft); font-style: italic; }
   .combo-input.thin { border-width: 1px; border-color: var(--input-border); border-radius: 4px; font-weight: 500; }
+  .combo-item.selected { background: color-mix(in srgb, var(--green) 18%, transparent); font-weight: 600; }
+  .combo-check { display: inline-block; width: 14px; margin-right: 6px; color: var(--green); font-weight: bold; }
+  .combo-check.empty { color: transparent; }
+  .combo-hint { display:inline-block; margin-left:6px; font-size:11px; color:var(--ink-soft); font-style:italic; opacity:0.8; }
 
   /* ── Settings theme grid ───────────────────────────────────────────── */
   .theme-option {
@@ -1073,7 +1077,7 @@
                    onkeydown="comboKey(event,'rack')">
             <div class="combo-list" id="rackList"></div>
           </span>
-          <span class="combo-wrap" id="ruCombo" style="min-width:140px;">
+          <span class="combo-wrap" id="ruCombo" style="min-width:140px;" title="Ctrl/Cmd+click to select multiple RUs">
             <input type="text" class="combo-input" id="ruInput" placeholder="— Select RU —"
                    autocomplete="off" disabled
                    oninput="comboFilter('ru')"
@@ -2025,7 +2029,7 @@ const RACK_LIMITS = { DH1: 320, DH2: 260, DH3: 200, DH4: 120 };
 const _comboReg = {
   rack:     { inputId: "rackInput",     listId: "rackList",     items: [], placeholder: "— Select rack —" },
   editRack: { inputId: "editRackInput", listId: "editRackList", items: [], placeholder: "— Select rack —" },
-  ru:       { inputId: "ruInput",       listId: "ruList",       items: [], placeholder: "— Select RU —" },
+  ru:       { inputId: "ruInput",       listId: "ruList",       items: [], placeholder: "— Select RU —", multi: true, selected: [] },
   editRu:   { inputId: "editRuInput",   listId: "editRuList",   items: [], placeholder: "— Select RU —" },
   node:     { inputId: "nodeInput",     listId: "nodeList",     items: [], placeholder: "— Select Node —" },
   editNode: { inputId: "editNodeInput", listId: "editNodeList", items: [], placeholder: "— Select Node —" },
@@ -2035,6 +2039,7 @@ function comboSet(name, items, placeholder, currentVal) {
   const c = _comboReg[name]; if (!c) return;
   c.items = items.slice();
   c.placeholder = placeholder;
+  if (c.multi) c.selected = [];
   const inp = document.getElementById(c.inputId);
   if (!inp) return;
   inp.placeholder = placeholder;
@@ -2046,7 +2051,10 @@ function comboSet(name, items, placeholder, currentVal) {
 function comboFilteredItems(name) {
   const c = _comboReg[name];
   const inp = document.getElementById(c.inputId);
-  const q = (inp.value || "").trim();
+  let q = (inp.value || "").trim();
+  // In multi-select mode, the displayed value may be a comma-separated list
+  // of already-selected items — don't treat that as a filter query.
+  if (c.multi && c.selected && c.selected.length && q === c.selected.join(", ")) q = "";
   if (!q) return c.items;
   if (/^\d+$/.test(q)) {
     return c.items.filter(v => {
@@ -2067,15 +2075,22 @@ function comboRender(name) {
     return;
   }
   const esc = s => s.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
-  list.innerHTML = visible.slice(0, 400).map(v =>
-    `<div class="combo-item" data-val="${esc(v)}" onmousedown="event.preventDefault();comboPick('${name}','${esc(v)}')">${esc(v)}</div>`
-  ).join("");
+  const sel = (c.multi && c.selected) ? new Set(c.selected) : null;
+  list.innerHTML = visible.slice(0, 400).map(v => {
+    const isSel = sel && sel.has(v);
+    const cls = "combo-item" + (isSel ? " selected" : "");
+    const mark = isSel ? '<span class="combo-check">✓</span>' : (c.multi ? '<span class="combo-check empty"></span>' : '');
+    return `<div class="${cls}" data-val="${esc(v)}" onmousedown="event.preventDefault();comboPick('${name}','${esc(v)}', event.ctrlKey||event.metaKey)">${mark}${esc(v)}</div>`;
+  }).join("");
 }
 
 function comboOpen(name) {
   const c = _comboReg[name]; if (!c) return;
   const inp = document.getElementById(c.inputId);
   if (!inp || inp.disabled) return;
+  if (c.multi && c.selected && c.selected.length && inp.value === c.selected.join(", ")) {
+    try { inp.select(); } catch (e) {}
+  }
   comboRender(name);
   document.getElementById(c.listId).classList.add("open");
 }
@@ -2094,14 +2109,44 @@ function comboBlurClose(name) {
   setTimeout(() => {
     const c = _comboReg[name];
     const inp = document.getElementById(c.inputId);
-    if (inp && inp.value && !c.items.includes(inp.value.trim())) inp.value = "";
+    if (!inp) { comboCloseByName(name); return; }
+    if (c.multi && c.selected && c.selected.length) {
+      inp.value = c.selected.join(", ");
+    } else if (inp.value && !c.items.includes(inp.value.trim())) {
+      inp.value = "";
+    }
     comboCloseByName(name);
   }, 150);
 }
 
-function comboPick(name, val) {
+function comboPick(name, val, addToSelection) {
   const c = _comboReg[name];
   const inp = document.getElementById(c.inputId);
+  if (c.multi) {
+    if (!c.selected) c.selected = [];
+    if (addToSelection) {
+      const oldJoin = c.selected.join(", ");
+      const idx = c.selected.indexOf(val);
+      if (idx >= 0) c.selected.splice(idx, 1);
+      else c.selected.push(val);
+      c.selected.sort((a, b) => {
+        const na = parseInt((a.match(/\d+/) || [0])[0], 10);
+        const nb = parseInt((b.match(/\d+/) || [0])[0], 10);
+        return na - nb;
+      });
+      // Keep user's typed filter intact; otherwise sync displayed text to selection.
+      if (inp.value === "" || inp.value === oldJoin) {
+        inp.value = c.selected.join(", ");
+      }
+      comboRender(name);
+      return;
+    }
+    c.selected = [val];
+    inp.value = val;
+    comboCloseByName(name);
+    inp.blur();
+    return;
+  }
   inp.value = val;
   comboCloseByName(name);
   inp.blur();
@@ -2111,7 +2156,7 @@ function comboKey(e, name) {
   if (e.key === "Enter") {
     e.preventDefault();
     const visible = comboFilteredItems(name);
-    if (visible.length) comboPick(name, visible[0]);
+    if (visible.length) comboPick(name, visible[0], e.ctrlKey || e.metaKey);
   } else if (e.key === "Escape") {
     comboCloseByName(name);
   }
@@ -2121,8 +2166,18 @@ function comboGetValue(name) {
   const c = _comboReg[name];
   const inp = document.getElementById(c.inputId);
   if (!inp || inp.disabled) return "";
+  if (c.multi && c.selected && c.selected.length) return c.selected[0];
   const v = (inp.value || "").trim();
   return c.items.includes(v) ? v : "";
+}
+
+function comboGetValues(name) {
+  const c = _comboReg[name];
+  const inp = document.getElementById(c.inputId);
+  if (!inp || inp.disabled) return [];
+  if (c.multi && c.selected && c.selected.length) return c.selected.slice();
+  const v = (inp.value || "").trim();
+  return c.items.includes(v) ? [v] : [];
 }
 
 function populateRackOptions(name, loc, currentVal) {
@@ -2159,6 +2214,7 @@ function populateRuOptions(name, loc, currentVal) {
 }
 
 function getRu()     { return comboGetValue("ru"); }
+function getRuList() { return comboGetValues("ru"); }
 function getEditRu() { return comboGetValue("editRu"); }
 
 const NODE_MAX = 16;
@@ -2240,20 +2296,30 @@ async function saveEntry() {
   if (!loc) { toast("Please choose a location.", "error"); $("locSelect").focus(); return; }
   const desc = $("description").value.trim();
   if (!desc) { toast("Please enter a task description.", "error"); $("description").focus(); return; }
-  const rowId = addTask(
-    $("entryDate").value, desc, loc,
-    $("dcCode").value.trim() || "EVI01", $("addInfo").value.trim(),
-    getRack(), getRu(), getNode()
-  );
+  const entryDate = $("entryDate").value;
+  const dcCode = $("dcCode").value.trim() || "EVI01";
+  const addInfo = $("addInfo").value.trim();
+  const rack = getRack();
+  const node = getNode();
+  const ruList = getRuList();
+  const rus = ruList.length ? ruList : [""];
+  const rowIds = [];
+  for (const ru of rus) {
+    rowIds.push(addTask(entryDate, desc, loc, dcCode, addInfo, rack, ru, node));
+  }
   if (stagedAdd.length) {
-    await persistStaged(rowId, stagedAdd);
+    for (const rid of rowIds) await persistStaged(rid, stagedAdd);
     await refreshAttachmentsCache();
   }
   const n = stagedAdd.length;
   stagedAdd = [];
   renderStagedList("add");
-  toast("Entry #" + rowId + " saved" + (n ? " with " + n + " file(s)" : "") + "!", "success");
-  setStatus("SAVED  Record #" + rowId);
+  const multi = rowIds.length > 1;
+  const summary = multi
+    ? rowIds.length + " entries saved (#" + rowIds[0] + "-#" + rowIds[rowIds.length-1] + ")"
+    : "Entry #" + rowIds[0] + " saved";
+  toast(summary + (n ? " with " + n + " file(s)" : "") + "!", "success");
+  setStatus(multi ? "SAVED  " + rowIds.length + " records" : "SAVED  Record #" + rowIds[0]);
   clearForm();
   refreshActiveTab();
 }
@@ -3138,8 +3204,15 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.6.0";
+const CURRENT_VERSION = "v1.7.0";
 const VERSION_HISTORY = [
+  { version: "v1.7.0", date: "2026-05-11", features: [
+      "RU dropdown on the SAVE ENTRY form now supports multi-select — hold Ctrl (or Cmd on Mac) and click to toggle multiple RUs",
+      "Selected RUs show a green check in the dropdown and appear comma-separated in the input (e.g. \"RU01, RU05, RU10\")",
+      "Saving with multiple RUs creates one record per RU — same description, rack, node, location, attachments are duplicated across each record",
+      "Single click (without Ctrl/Cmd) still works as before — replaces the selection with just that RU",
+      "Ctrl/Cmd+Enter in the RU input toggles the first filtered match into the selection"
+  ]},
   { version: "v1.6.0", date: "2026-05-11", features: [
       "Added a new WALKTHROUGH button next to RECURRING on the entry form",
       "Opens a popup with Date picker, Data Hall selection (DH1-DH6), and AM/PM shift selection",

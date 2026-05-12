@@ -29,6 +29,14 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.7.0 (2026-05-11)
+**New Features:**
+- **RU dropdown** on the SAVE ENTRY form now supports **multi-select** — hold `Ctrl` (or `Cmd` on Mac) and click to toggle multiple RUs
+- Selected RUs show a green ✓ in the dropdown and appear comma-separated in the input (e.g. `RU01, RU05, RU10`)
+- Saving with multiple RUs creates **one record per RU** — same description, rack, node, location, attachments are duplicated across each record
+- Single click (without Ctrl/Cmd) still works as before — replaces the selection with just that RU
+- `Ctrl/Cmd+Enter` in the RU input toggles the first filtered match into the selection
+
 ### v1.6.0 (2026-05-11)
 **New Features:**
 - Added a new **WALKTHROUGH** button next to RECURRING on the entry form
