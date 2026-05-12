@@ -29,6 +29,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.7.2 (2026-05-11)
+**UI Tweaks:**
+- View tabs are now **color-coded** — `All Records` stays blue and `Weekly View` is green, with each tab's accent border in the tab strip matching its theme
+- When a tab is active, the surrounding `tab-content` border picks up the same accent color so the page reads as one coherent panel
+- Per-tab styling uses `:nth-child` rules so future tabs (3rd → orange, 4th → red) are already wired in — just add the markup
+
 ### v1.7.1 (2026-05-11)
 **Improvements:**
 - **Node dropdown** on the SAVE ENTRY form now also supports **multi-select** — hold `Ctrl` (or `Cmd` on Mac) and click to toggle multiple Nodes

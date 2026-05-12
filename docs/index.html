@@ -311,8 +311,62 @@
   .view-tab.active::before {
     background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0));
   }
+  /* Per-tab accent colors */
+  .view-tab:nth-child(1) { border-color: var(--blue); }
+  .view-tab:nth-child(1).active {
+    background:
+      linear-gradient(180deg,
+        rgba(255,255,255,0.35) 0%,
+        rgba(255,255,255,0.05) 48%,
+        rgba(0,0,0,0.18) 52%,
+        rgba(255,255,255,0.18) 100%),
+      linear-gradient(180deg, var(--ltblue) 0%, var(--blue) 50%, var(--navy) 100%);
+  }
+  .view-tab:nth-child(2) { border-color: var(--green); }
+  .view-tab:nth-child(2).active {
+    background:
+      linear-gradient(180deg,
+        rgba(255,255,255,0.35) 0%,
+        rgba(255,255,255,0.05) 48%,
+        rgba(0,0,0,0.18) 52%,
+        rgba(255,255,255,0.18) 100%),
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--green) 30%, white) 0%,
+        var(--green) 50%,
+        color-mix(in srgb, var(--green) 50%, black) 100%);
+  }
+  .view-tab:nth-child(3) { border-color: var(--orange); }
+  .view-tab:nth-child(3).active {
+    background:
+      linear-gradient(180deg,
+        rgba(255,255,255,0.35) 0%,
+        rgba(255,255,255,0.05) 48%,
+        rgba(0,0,0,0.18) 52%,
+        rgba(255,255,255,0.18) 100%),
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--orange) 30%, white) 0%,
+        var(--orange) 50%,
+        color-mix(in srgb, var(--orange) 50%, black) 100%);
+  }
+  .view-tab:nth-child(4) { border-color: var(--red); }
+  .view-tab:nth-child(4).active {
+    background:
+      linear-gradient(180deg,
+        rgba(255,255,255,0.35) 0%,
+        rgba(255,255,255,0.05) 48%,
+        rgba(0,0,0,0.18) 52%,
+        rgba(255,255,255,0.18) 100%),
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--red) 30%, white) 0%,
+        var(--red) 50%,
+        color-mix(in srgb, var(--red) 50%, black) 100%);
+  }
+  /* Active-tab-driven content border (set by switchTab) */
   .tab-content { border:2px solid var(--blue); border-radius:0 8px 8px 8px; padding:0;
-                 background:var(--card-bg); }
+                 background:var(--card-bg); transition: border-color 0.18s ease; }
+  .tab-content[data-tab-color="green"]  { border-color: var(--green); }
+  .tab-content[data-tab-color="orange"] { border-color: var(--orange); }
+  .tab-content[data-tab-color="red"]    { border-color: var(--red); }
   .tab-panel { display:none; }
   .tab-panel.active { display:block; }
   .week-header { background:var(--navy); color:#fff; padding:12px 20px; display:flex;
@@ -2536,6 +2590,11 @@ function switchTab(tab) {
   });
   $("tabAll").classList.toggle("active", tab === "all");
   $("tabWeek").classList.toggle("active", tab === "week");
+  const content = document.querySelector(".tab-content");
+  if (content) {
+    if (tab === "week") content.setAttribute("data-tab-color", "green");
+    else content.removeAttribute("data-tab-color");
+  }
   if (tab === "week") loadCurrentWeek();
 }
 
@@ -3208,8 +3267,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.7.1";
+const CURRENT_VERSION = "v1.7.2";
 const VERSION_HISTORY = [
+  { version: "v1.7.2", date: "2026-05-11", features: [
+      "View tabs are now color-coded — \"All Records\" stays blue and \"Weekly View\" is green, with each tab's accent border in the tab strip matching its theme",
+      "When a tab is active, the surrounding tab-content border picks up the same accent color (blue for All Records, green for Weekly View) so the page reads as one coherent panel",
+      "Per-tab styling uses :nth-child rules so future tabs (3rd → orange, 4th → red) are already wired in — just add the markup"
+  ]},
   { version: "v1.7.1", date: "2026-05-11", features: [
       "Node dropdown on the SAVE ENTRY form now also supports multi-select — hold Ctrl (or Cmd on Mac) and click to toggle multiple Nodes",
       "When both RU and Node have multiple selections, saving creates a record for every (RU × Node) combination (e.g. 3 RUs × 2 Nodes = 6 records)",
