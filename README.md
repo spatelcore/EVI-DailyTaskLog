@@ -29,6 +29,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.7.1 (2026-05-11)
+**Improvements:**
+- **Node dropdown** on the SAVE ENTRY form now also supports **multi-select** — hold `Ctrl` (or `Cmd` on Mac) and click to toggle multiple Nodes
+- When both RU and Node have multiple selections, saving creates a record for every **(RU × Node) combination** (e.g. 3 RUs × 2 Nodes = 6 records)
+- Same UX as the RU multi-select: green ✓ marks in the dropdown, comma-separated display in the input, `Ctrl/Cmd+Enter` toggles the first match
+
 ### v1.7.0 (2026-05-11)
 **New Features:**
 - **RU dropdown** on the SAVE ENTRY form now supports **multi-select** — hold `Ctrl` (or `Cmd` on Mac) and click to toggle multiple RUs

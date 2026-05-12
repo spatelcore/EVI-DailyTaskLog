@@ -1086,7 +1086,7 @@
                    onkeydown="comboKey(event,'ru')">
             <div class="combo-list" id="ruList"></div>
           </span>
-          <span class="combo-wrap" id="nodeCombo" style="min-width:150px;">
+          <span class="combo-wrap" id="nodeCombo" style="min-width:150px;" title="Ctrl/Cmd+click to select multiple Nodes">
             <input type="text" class="combo-input" id="nodeInput" placeholder="— Select Node —"
                    autocomplete="off" disabled
                    oninput="comboFilter('node')"
@@ -2031,7 +2031,7 @@ const _comboReg = {
   editRack: { inputId: "editRackInput", listId: "editRackList", items: [], placeholder: "— Select rack —" },
   ru:       { inputId: "ruInput",       listId: "ruList",       items: [], placeholder: "— Select RU —", multi: true, selected: [] },
   editRu:   { inputId: "editRuInput",   listId: "editRuList",   items: [], placeholder: "— Select RU —" },
-  node:     { inputId: "nodeInput",     listId: "nodeList",     items: [], placeholder: "— Select Node —" },
+  node:     { inputId: "nodeInput",     listId: "nodeList",     items: [], placeholder: "— Select Node —", multi: true, selected: [] },
   editNode: { inputId: "editNodeInput", listId: "editNodeList", items: [], placeholder: "— Select Node —" },
 };
 
@@ -2234,6 +2234,7 @@ function populateNodeOptions(name, loc, currentVal) {
 }
 
 function getNode()     { return comboGetValue("node"); }
+function getNodeList() { return comboGetValues("node"); }
 function getEditNode() { return comboGetValue("editNode"); }
 
 function updateSaveEntryDisabled() {
@@ -2300,12 +2301,15 @@ async function saveEntry() {
   const dcCode = $("dcCode").value.trim() || "EVI01";
   const addInfo = $("addInfo").value.trim();
   const rack = getRack();
-  const node = getNode();
   const ruList = getRuList();
+  const nodeList = getNodeList();
   const rus = ruList.length ? ruList : [""];
+  const nodes = nodeList.length ? nodeList : [""];
   const rowIds = [];
   for (const ru of rus) {
-    rowIds.push(addTask(entryDate, desc, loc, dcCode, addInfo, rack, ru, node));
+    for (const node of nodes) {
+      rowIds.push(addTask(entryDate, desc, loc, dcCode, addInfo, rack, ru, node));
+    }
   }
   if (stagedAdd.length) {
     for (const rid of rowIds) await persistStaged(rid, stagedAdd);
@@ -3204,8 +3208,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.7.0";
+const CURRENT_VERSION = "v1.7.1";
 const VERSION_HISTORY = [
+  { version: "v1.7.1", date: "2026-05-11", features: [
+      "Node dropdown on the SAVE ENTRY form now also supports multi-select — hold Ctrl (or Cmd on Mac) and click to toggle multiple Nodes",
+      "When both RU and Node have multiple selections, saving creates a record for every (RU × Node) combination (e.g. 3 RUs × 2 Nodes = 6 records)",
+      "Same UX as the RU multi-select: green ✓ marks in the dropdown, comma-separated display in the input, Ctrl/Cmd+Enter toggles the first match"
+  ]},
   { version: "v1.7.0", date: "2026-05-11", features: [
       "RU dropdown on the SAVE ENTRY form now supports multi-select — hold Ctrl (or Cmd on Mac) and click to toggle multiple RUs",
       "Selected RUs show a green check in the dropdown and appear comma-separated in the input (e.g. \"RU01, RU05, RU10\")",
