@@ -29,6 +29,16 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.7.3 (2026-05-18)
+**Mobile UI:**
+- Added **mobile-responsive design** — the UI now adapts when opened on a phone or small tablet (≤768px) with a tighter pass for very narrow phones (≤480px)
+- Form cards (`SELECT DATE` / `TASK DETAILS`) stack vertically; form rows place the label above the input for easier thumb-typing
+- Location row controls (rack / RU / node combos, DC code, other-location input) go full-width instead of overflowing
+- Recall bar, view tabs, button rows, and modal actions wrap into balanced 2-column (or 1-column on tiny screens) grids with 44px+ touch targets
+- Tables now scroll horizontally inside their wrapper rather than cramming columns; Weekly View day-card rows wrap description and actions onto their own lines
+- Modals expand to near-fullscreen on phones with a sticky header so the close button stays reachable; toasts respect screen edges
+- Input font-size set to 16px on mobile to prevent iOS Safari from auto-zooming on focus
+
 ### v1.7.2 (2026-05-11)
 **UI Tweaks:**
 - View tabs are now **color-coded** — `All Records` stays blue and `Weekly View` is green, with each tab's accent border in the tab strip matching its theme
