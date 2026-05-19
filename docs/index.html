@@ -1269,7 +1269,7 @@
             <option value="L3-Optics Cage">L3-Optics Cage</option>
             <option value="Other">Others</option>
           </select>
-          <span class="combo-wrap" id="rackCombo" style="min-width:150px;">
+          <span class="combo-wrap" id="rackCombo" style="min-width:150px;" title="Click items to toggle multiple racks">
             <input type="text" class="combo-input" id="rackInput" placeholder="— Select rack —"
                    autocomplete="off" disabled
                    oninput="comboFilter('rack')"
@@ -1278,7 +1278,7 @@
                    onkeydown="comboKey(event,'rack')">
             <div class="combo-list" id="rackList"></div>
           </span>
-          <span class="combo-wrap" id="ruCombo" style="min-width:140px;" title="Ctrl/Cmd+click to select multiple RUs">
+          <span class="combo-wrap" id="ruCombo" style="min-width:140px;" title="Click items to toggle multiple RUs">
             <input type="text" class="combo-input" id="ruInput" placeholder="— Select RU —"
                    autocomplete="off" disabled
                    oninput="comboFilter('ru')"
@@ -1287,7 +1287,7 @@
                    onkeydown="comboKey(event,'ru')">
             <div class="combo-list" id="ruList"></div>
           </span>
-          <span class="combo-wrap" id="nodeCombo" style="min-width:150px;" title="Ctrl/Cmd+click to select multiple Nodes">
+          <span class="combo-wrap" id="nodeCombo" style="min-width:150px;" title="Click items to toggle multiple Nodes">
             <input type="text" class="combo-input" id="nodeInput" placeholder="— Select Node —"
                    autocomplete="off" disabled
                    oninput="comboFilter('node')"
@@ -2228,7 +2228,7 @@ function getLocation() {
 const RACK_LIMITS = { DH1: 320, DH2: 260, DH3: 200, DH4: 120 };
 
 const _comboReg = {
-  rack:     { inputId: "rackInput",     listId: "rackList",     items: [], placeholder: "— Select rack —" },
+  rack:     { inputId: "rackInput",     listId: "rackList",     items: [], placeholder: "— Select rack —", multi: true, selected: [] },
   editRack: { inputId: "editRackInput", listId: "editRackList", items: [], placeholder: "— Select rack —" },
   ru:       { inputId: "ruInput",       listId: "ruList",       items: [], placeholder: "— Select RU —", multi: true, selected: [] },
   editRu:   { inputId: "editRuInput",   listId: "editRuList",   items: [], placeholder: "— Select RU —" },
@@ -2325,27 +2325,22 @@ function comboPick(name, val, addToSelection) {
   const inp = document.getElementById(c.inputId);
   if (c.multi) {
     if (!c.selected) c.selected = [];
-    if (addToSelection) {
-      const oldJoin = c.selected.join(", ");
-      const idx = c.selected.indexOf(val);
-      if (idx >= 0) c.selected.splice(idx, 1);
-      else c.selected.push(val);
-      c.selected.sort((a, b) => {
-        const na = parseInt((a.match(/\d+/) || [0])[0], 10);
-        const nb = parseInt((b.match(/\d+/) || [0])[0], 10);
-        return na - nb;
-      });
-      // Keep user's typed filter intact; otherwise sync displayed text to selection.
-      if (inp.value === "" || inp.value === oldJoin) {
-        inp.value = c.selected.join(", ");
-      }
-      comboRender(name);
-      return;
+    // Plain click on a multi-select field toggles the item and keeps the
+    // dropdown open. Ctrl/Cmd+click still works for parity. The dropdown
+    // closes on outside click, Esc, or input blur.
+    const oldJoin = c.selected.join(", ");
+    const idx = c.selected.indexOf(val);
+    if (idx >= 0) c.selected.splice(idx, 1);
+    else c.selected.push(val);
+    c.selected.sort((a, b) => {
+      const na = parseInt((a.match(/\d+/) || [0])[0], 10);
+      const nb = parseInt((b.match(/\d+/) || [0])[0], 10);
+      return na - nb;
+    });
+    if (inp.value === "" || inp.value === oldJoin) {
+      inp.value = c.selected.join(", ");
     }
-    c.selected = [val];
-    inp.value = val;
-    comboCloseByName(name);
-    inp.blur();
+    comboRender(name);
     return;
   }
   inp.value = val;
@@ -2396,6 +2391,7 @@ function populateRackOptions(name, loc, currentVal) {
 }
 
 function getRack()     { return comboGetValue("rack"); }
+function getRackList() { return comboGetValues("rack"); }
 function getEditRack() { return comboGetValue("editRack"); }
 
 const RU_MAX = 52;
@@ -2501,15 +2497,18 @@ async function saveEntry() {
   const entryDate = $("entryDate").value;
   const dcCode = $("dcCode").value.trim() || "EVI01";
   const addInfo = $("addInfo").value.trim();
-  const rack = getRack();
+  const rackList = getRackList();
   const ruList = getRuList();
   const nodeList = getNodeList();
+  const racks = rackList.length ? rackList : [""];
   const rus = ruList.length ? ruList : [""];
   const nodes = nodeList.length ? nodeList : [""];
   const rowIds = [];
-  for (const ru of rus) {
-    for (const node of nodes) {
-      rowIds.push(addTask(entryDate, desc, loc, dcCode, addInfo, rack, ru, node));
+  for (const rack of racks) {
+    for (const ru of rus) {
+      for (const node of nodes) {
+        rowIds.push(addTask(entryDate, desc, loc, dcCode, addInfo, rack, ru, node));
+      }
     }
   }
   if (stagedAdd.length) {
@@ -3414,8 +3413,15 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.7.3";
+const CURRENT_VERSION = "v1.7.4";
 const VERSION_HISTORY = [
+  { version: "v1.7.4", date: "2026-05-19", features: [
+      "Multi-select on Rack, RU, and Node combos now works by plain click — no Ctrl/Cmd modifier needed. Click an item to toggle it in/out of the selection; the dropdown stays open while you build the list",
+      "Rack combobox now supports multi-select (same UX as RU and Node) — green ✓ marks, comma-separated display in the input, click again to deselect",
+      "Saving with multiple racks expands into Rack × RU × Node combinations — e.g. 2 racks × 3 RUs × 2 Nodes creates 12 records sharing the same description, location, DC code, attachments",
+      "Tooltips on the three combos updated to \"Click items to toggle multiple\" so the gesture is discoverable without hovering for the old Ctrl/Cmd hint",
+      "Close behavior unchanged: click outside, press Esc, or tab away to commit the selection"
+  ]},
   { version: "v1.7.3", date: "2026-05-18", features: [
       "Added mobile-responsive design — the UI now adapts when opened on a phone or small tablet (≤768px) with a tighter pass for very narrow phones (≤480px)",
       "Form cards (Date / Task Details) stack vertically; form rows place the label above the input for easier thumb-typing",

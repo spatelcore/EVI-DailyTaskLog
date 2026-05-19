@@ -29,6 +29,14 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.7.4 (2026-05-19)
+**Multi-select fix:**
+- **Plain-click toggle** on Rack, RU, and Node combos — no `Ctrl/Cmd` modifier required. Click an item to add it; click again to remove. Dropdown stays open while building the selection.
+- **Rack combobox** now supports multi-select (same UX as RU and Node): green ✓ marks in the dropdown, comma-separated display in the input.
+- Saving with multiple racks expands into **Rack × RU × Node** combinations (e.g. 2 racks × 3 RUs × 2 Nodes → 12 records sharing the same description, location, DC code, and attachments).
+- Tooltips updated to "Click items to toggle multiple" for discoverability.
+- Dropdown closes on outside click, `Esc`, or input blur — same as before.
+
 ### v1.7.3 (2026-05-18)
 **Mobile UI:**
 - Added **mobile-responsive design** — the UI now adapts when opened on a phone or small tablet (≤768px) with a tighter pass for very narrow phones (≤480px)
