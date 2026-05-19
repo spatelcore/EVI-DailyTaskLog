@@ -1084,6 +1084,153 @@
     .container > * { animation: none; }
     * { transition: none !important; }
   }
+
+  /* ── Mobile / phone responsive ─────────────────────────────────────────
+     Layout collapses to single-column, form rows stack label-above-input,
+     tables scroll horizontally, modals go near-fullscreen, and touch
+     targets grow to comfortable sizes. Activates ≤768px (tablets/phones)
+     with a tighter pass at ≤480px for narrow phones. */
+  @media (max-width: 768px) {
+    body { letter-spacing: 0; }
+
+    .banner {
+      padding: 12px 14px; font-size: 14px; letter-spacing: 0.02em;
+    }
+    .banner-title { font-size: 12px; letter-spacing: 0.08em; gap: 6px; }
+    .banner-title::before { font-size: 16px; }
+    .settings-btn { width: 36px; height: 36px; border-radius: 10px; right: 12px; }
+    .settings-btn svg { width: 18px; height: 18px; }
+
+    .container { padding: 14px 12px 100px; }
+
+    /* Form section — stack vertically */
+    .form-section { gap: 12px; margin-bottom: 14px; flex-direction: column; }
+    .cal-card, .details-card {
+      min-width: 0; width: 100%; padding: 14px; border-radius: var(--r-md);
+    }
+    .cal-card h3, .details-card h3 { font-size: 10px; margin-bottom: 10px; }
+
+    /* Form rows: stack label above control on mobile */
+    .form-row { flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 12px; }
+    .form-row label {
+      min-width: auto; text-align: left; align-self: flex-start;
+      padding: 6px 10px; font-size: 12px;
+    }
+    .form-row input[type="text"],
+    .form-row textarea,
+    #dcCode { max-width: none !important; width: 100%; font-size: 16px; }
+
+    /* Radio/combo group inside Location row — full width children */
+    .radio-group { width: 100%; gap: 8px; }
+    .radio-group #locSelect { width: 100% !important; min-width: 0 !important; font-size: 16px; }
+    .combo-wrap { width: 100% !important; min-width: 0 !important; margin-left: 0 !important; display: block !important; }
+    .combo-input { width: 100%; font-size: 16px; }
+    #locOther { width: 100% !important; font-size: 16px; }
+
+    /* Button rows wrap and stretch buttons full-width */
+    .btn-row { gap: 8px; }
+    .btn { padding: 12px 16px; font-size: 14px; min-height: 44px; flex: 1 1 calc(50% - 4px); }
+    .btn-row .divider-v { display: none; }
+    .kbd-hint { display: none; }
+
+    /* Stats dashboard — 3-column grid that wraps cleanly */
+    .stats-dash { gap: 8px; }
+    .mini-stat { flex: 1 1 calc(50% - 4px); min-width: 0; padding: 10px 12px; }
+    .mini-stat .mini-num { font-size: 20px; }
+
+    .status-bar { font-size: 12px; padding: 8px 12px; }
+
+    /* Recall bar — wrap into a compact grid */
+    .recall-bar {
+      gap: 6px; padding: 10px 8px;
+    }
+    .recall-bar .btn { flex: 1 1 calc(50% - 4px); padding: 10px 12px; font-size: 12px; min-height: 40px; }
+    .recall-bar .recall-label { width: 100%; text-align: center; margin-bottom: 4px; }
+    .recall-bar input[type="number"] { flex: 1 1 calc(50% - 4px); width: auto; font-size: 16px; }
+    .recall-bar #weekJump { flex: 1 1 100%; margin-left: 0 !important; width: 100%; font-size: 14px; }
+    .record-count { margin-left: 0; width: 100%; text-align: center; }
+
+    /* View tabs — smaller, equal width */
+    .view-tabs { flex-wrap: wrap; }
+    .view-tab { padding: 10px 14px; font-size: 13px; flex: 1 1 auto; text-align: center; }
+    .tab-content { border-radius: 0 0 8px 8px; }
+
+    /* Search bar */
+    .search-bar { flex-wrap: wrap; padding: 10px 12px; gap: 6px; }
+    .search-bar input { width: 100%; font-size: 16px; min-width: 0; }
+    .search-bar .search-count { width: 100%; text-align: right; }
+
+    /* Tables — horizontal scroll instead of cramped wrap */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { font-size: 12px; min-width: 720px; }
+    thead th { padding: 8px 6px; font-size: 11px; }
+    tbody td { padding: 6px; }
+    .act-btn { padding: 6px 8px; font-size: 11px; }
+
+    /* Weekly view */
+    .week-header { padding: 10px 12px; gap: 8px; flex-direction: column; align-items: stretch; }
+    .week-header > div:first-child { flex-wrap: wrap; justify-content: center; }
+    .week-header h3 { font-size: 14px; flex: 1 1 100%; text-align: center; order: -1; }
+    .week-stats { justify-content: center; flex-wrap: wrap; }
+    .week-day-cards { padding: 10px; gap: 10px; }
+    .day-card-header { padding: 8px 12px; font-size: 13px; flex-wrap: wrap; gap: 6px; }
+    .day-card-row {
+      flex-wrap: wrap; padding: 10px 12px; gap: 6px; align-items: flex-start;
+    }
+    .day-card-desc { flex: 1 1 100%; order: 3; font-size: 13px; }
+    .day-card-info { max-width: none; flex: 1 1 100%; order: 4; }
+    .day-card-actions { order: 5; flex: 1 1 100%; justify-content: flex-end; margin-top: 4px; }
+
+    /* Day-section task rows — same treatment */
+    .day-task-row { flex-wrap: wrap; gap: 6px; }
+    .task-desc { flex: 1 1 100%; order: 3; }
+    .task-info { max-width: none; flex: 1 1 100%; order: 4; }
+
+    /* Modals — near-fullscreen on phones */
+    .modal-overlay { padding: 0; align-items: stretch; }
+    .modal { max-width: 100% !important; width: 100% !important; border-radius: 0;
+             min-height: 100vh; max-height: 100vh; overflow-y: auto; }
+    .modal-header { padding: 14px 16px; position: sticky; top: 0; z-index: 10; }
+    .modal-header h2 { font-size: 16px; }
+    .modal-body { padding: 16px; }
+    .modal-actions { padding: 0 16px 16px; flex-wrap: wrap; }
+    .modal-actions .btn { flex: 1 1 calc(50% - 4px); }
+
+    /* Theme grid stays sensible */
+    .theme-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* Attachments — fit inside the column */
+    .att-drop { padding: 12px; }
+    .att-chip { max-width: 100%; }
+    .att-chip .att-name { max-width: none; }
+
+    /* Toasts respect screen edges */
+    .toast { top: 12px; right: 12px; left: 12px; text-align: center; font-size: 13px; padding: 12px 16px; }
+
+    /* Version label tucks neatly */
+    .version-label { font-size: 11px; padding: 3px 9px; bottom: 8px; left: 8px; }
+
+    /* AI summary */
+    .ai-summary-box { padding: 18px 16px; font-size: 13px; }
+    .summary-stats { gap: 8px; }
+    .stat-card { min-width: 0; flex: 1 1 calc(50% - 4px); padding: 12px; }
+    .stat-card .stat-num { font-size: 22px; }
+  }
+
+  /* Extra-narrow phones (≤480px) */
+  @media (max-width: 480px) {
+    .banner { padding: 10px 12px; font-size: 13px; }
+    .banner-title { font-size: 11px; }
+    .container { padding: 12px 10px 90px; }
+
+    .btn { flex: 1 1 100%; }
+    .mini-stat { flex: 1 1 100%; }
+    .recall-bar .btn { flex: 1 1 100%; }
+    .recall-bar input[type="number"] { flex: 1 1 100%; }
+    .stat-card { flex: 1 1 100%; }
+    .modal-actions .btn { flex: 1 1 100%; }
+    .view-tab { padding: 9px 10px; font-size: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -3267,8 +3414,17 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.7.2";
+const CURRENT_VERSION = "v1.7.3";
 const VERSION_HISTORY = [
+  { version: "v1.7.3", date: "2026-05-18", features: [
+      "Added mobile-responsive design — the UI now adapts when opened on a phone or small tablet (≤768px) with a tighter pass for very narrow phones (≤480px)",
+      "Form cards (Date / Task Details) stack vertically; form rows place the label above the input for easier thumb-typing",
+      "Location row controls (rack / RU / node combos, DC code, other-location input) go full-width instead of overflowing",
+      "Recall bar, view tabs, button rows, and modal actions wrap into balanced 2-column (or 1-column on tiny screens) grids with 44px+ touch targets",
+      "Tables now scroll horizontally inside their wrapper rather than cramming columns; Weekly View day-card rows wrap description and actions onto their own lines",
+      "Modals expand to near-fullscreen on phones with a sticky header so the close button stays reachable; toasts respect screen edges",
+      "Input font-size set to 16px on mobile to prevent iOS Safari from auto-zooming on focus"
+  ]},
   { version: "v1.7.2", date: "2026-05-11", features: [
       "View tabs are now color-coded — \"All Records\" stays blue and \"Weekly View\" is green, with each tab's accent border in the tab strip matching its theme",
       "When a tab is active, the surrounding tab-content border picks up the same accent color (blue for All Records, green for Weekly View) so the page reads as one coherent panel",
