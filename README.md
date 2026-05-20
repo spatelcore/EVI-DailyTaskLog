@@ -29,6 +29,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.7.5 (2026-05-20)
+**Data restore + ID re-sequence:**
+- Restored full task history into `docs/data.json` — **81 records** spanning weeks 14–20 (Apr 6 – May 20, 2026), recovered from a JSON export of the previous site after the repo move to **spatelcore**.
+- **Re-sequenced all record IDs** in strict chronological order (`entry_date`, then `saved_at`) so this week's entries follow naturally from prior weeks — IDs now run **1 → 81** with no gaps or reversals.
+- Existing 15 records in `data.json` kept; the remaining 66 records (weeks 16–20) merged in from the export so a fresh visit to **spatelcore.github.io/EVI-DailyTaskLog** loads the complete history.
+
 ### v1.7.4 (2026-05-19)
 **Multi-select fix:**
 - **Plain-click toggle** on Rack, RU, and Node combos — no `Ctrl/Cmd` modifier required. Click an item to add it; click again to remove. Dropdown stays open while building the selection.

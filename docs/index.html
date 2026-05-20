@@ -3413,8 +3413,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.7.4";
+const CURRENT_VERSION = "v1.7.5";
 const VERSION_HISTORY = [
+  { version: "v1.7.5", date: "2026-05-20", features: [
+      "Restored full task history into docs/data.json — 81 records spanning weeks 14–20 (Apr 6 – May 20, 2026), recovered from a JSON export of the previous site after the repo move to spatelcore",
+      "Re-sequenced all record IDs in strict chronological order (entry_date, then saved_at) so this week's entries follow naturally from prior weeks — IDs now run 1 → 81 with no gaps or reversals",
+      "Existing 15 records in data.json kept; the remaining 66 records (weeks 16–20) merged in from the export so a fresh visit to spatelcore.github.io/EVI-DailyTaskLog loads the complete history"
+  ]},
   { version: "v1.7.4", date: "2026-05-19", features: [
       "Multi-select on Rack, RU, and Node combos now works by plain click — no Ctrl/Cmd modifier needed. Click an item to toggle it in/out of the selection; the dropdown stays open while you build the list",
       "Rack combobox now supports multi-select (same UX as RU and Node) — green ✓ marks, comma-separated display in the input, click again to deselect",
