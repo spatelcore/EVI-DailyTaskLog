@@ -29,6 +29,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v1.7.6 (2026-05-20)
+**Auto-renumber IDs by date on page load:**
+- Records are now **sorted by `entry_date` (then `saved_at`) and renumbered `1 → N`** every time the page loads, so IDs always match chronological order.
+- Fixes the long-standing mismatch where the **JSON export** from the site produced records whose IDs no longer matched the date column (e.g. ID 1 on Apr 15, ID 5 on Apr 13) because `mergeRemoteTasks` only appended new IDs to the end of localStorage instead of re-sequencing.
+- A toast confirms how many record IDs were re-sequenced when the page repairs them — silent when everything is already in order.
+
 ### v1.7.5 (2026-05-20)
 **Data restore + ID re-sequence:**
 - Restored full task history into `docs/data.json` — **81 records** spanning weeks 14–20 (Apr 6 – May 20, 2026), recovered from a JSON export of the previous site after the repo move to **spatelcore**.

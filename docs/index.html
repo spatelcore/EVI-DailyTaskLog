@@ -1842,6 +1842,30 @@ function saveTasks(tasks) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
+// Re-sequence IDs in strict chronological order (entry_date, then saved_at).
+// Runs on every boot — keeps IDs matching date order even after a merge
+// from data.json or after manually-added records out of sequence.
+// Returns the number of records whose ID changed.
+function renumberByDate() {
+  const tasks = loadTasks();
+  if (!tasks.length) return 0;
+  tasks.sort((a, b) => {
+    const dCmp = (a.entry_date || "").localeCompare(b.entry_date || "");
+    if (dCmp !== 0) return dCmp;
+    return (a.saved_at || "").localeCompare(b.saved_at || "");
+  });
+  let changed = 0;
+  tasks.forEach((t, i) => {
+    const newId = i + 1;
+    if (t.id !== newId) { t.id = newId; changed++; }
+  });
+  if (changed) {
+    saveTasks(tasks);
+    nextId = tasks.length + 1;
+  }
+  return changed;
+}
+
 // One-time repair: fix records whose stored week_number/year drifted
 // because of the pre-v0.5.4 DST bug in getWeekNumber.
 function repairWeekNumbers() {
@@ -2186,6 +2210,8 @@ function init() {
     processRecurringTasks();
     const fixed = repairWeekNumbers();
     if (fixed) toast("Repaired " + fixed + " record(s) with incorrect week numbers.", "success");
+    const renumbered = renumberByDate();
+    if (renumbered) toast("Re-sequenced " + renumbered + " record ID(s) to match date order.", "success");
     recallAll();
     updateStats();
   };
@@ -3413,8 +3439,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.7.5";
+const CURRENT_VERSION = "v1.7.6";
 const VERSION_HISTORY = [
+  { version: "v1.7.6", date: "2026-05-20", features: [
+      "Added automatic ID re-sequencing on every page load — records are sorted by entry_date (then saved_at) and renumbered 1 → N so IDs always match chronological order, even after exports/imports or out-of-sequence merges",
+      "Fixes the long-standing mismatch where the JSON export from the site could produce records whose IDs no longer matched the date column (e.g. ID 1 on Apr 15, ID 5 on Apr 13) because mergeRemoteTasks only appended new IDs to the end of localStorage",
+      "Toast confirms how many record IDs were re-sequenced when the page repairs them — silent when everything is already in order"
+  ]},
   { version: "v1.7.5", date: "2026-05-20", features: [
       "Restored full task history into docs/data.json — 81 records spanning weeks 14–20 (Apr 6 – May 20, 2026), recovered from a JSON export of the previous site after the repo move to spatelcore",
       "Re-sequenced all record IDs in strict chronological order (entry_date, then saved_at) so this week's entries follow naturally from prior weeks — IDs now run 1 → 81 with no gaps or reversals",
