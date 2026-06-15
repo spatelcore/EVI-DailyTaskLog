@@ -2215,6 +2215,10 @@ function init() {
     recallAll();
     updateStats();
   };
+  // Load NetBox snapshot in parallel with data.json. The location-change
+  // handler reads _netboxData when the user picks a location, so we just
+  // need it loaded before the user interacts — no re-render required.
+  loadNetboxData();
   fetch("data.json").then(r => r.json()).then(async data => {
     if (data.tasks && data.tasks.length) mergeRemoteTasks(data.tasks);
     await boot();
@@ -2367,11 +2371,30 @@ function comboPick(name, val, addToSelection) {
       inp.value = c.selected.join(", ");
     }
     comboRender(name);
+    onComboChanged(name);
     return;
   }
   inp.value = val;
   comboCloseByName(name);
   inp.blur();
+  onComboChanged(name);
+}
+
+// When rack selection changes, cascade-refresh the RU and Node lists for that
+// form (add-entry or edit) so RU/Node reflect devices in the chosen rack(s).
+function onComboChanged(name) {
+  if (name === "rack") {
+    const loc = $("locSelect") ? $("locSelect").value : "";
+    if (!loc) return;
+    const racks = getRackList();
+    populateRuOptions("ru", loc, "", racks);
+    populateNodeOptions("node", loc, "", racks);
+  } else if (name === "editRack") {
+    const loc = getEditLocation();
+    const racks = comboGetValues("editRack");
+    populateRuOptions("editRu", loc, "", racks);
+    populateNodeOptions("editNode", loc, "", racks);
+  }
 }
 
 function comboKey(e, name) {
@@ -2402,16 +2425,68 @@ function comboGetValues(name) {
   return c.items.includes(v) ? [v] : [];
 }
 
+// ── NetBox snapshot loader ──────────────────────────
+// docs/netbox.json is produced by fetch_netbox.py and committed to the repo.
+// Shape: { fetched_at, site, locations: { "DH1": { racks: { "R001": { devices: [...] } } } } }
+let _netboxData = null;
+let _netboxLoaded = false;
+
+async function loadNetboxData() {
+  if (_netboxLoaded) return _netboxData;
+  _netboxLoaded = true;
+  try {
+    const resp = await fetch("netbox.json", { cache: "no-cache" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    _netboxData = await resp.json();
+    console.log("NetBox snapshot loaded:", _netboxData.fetched_at,
+                Object.keys(_netboxData.locations || {}).length, "location(s)");
+    // If the user already picked a location before the snapshot arrived,
+    // swap the synthetic rack list for the real one silently.
+    const sel = $("locSelect");
+    if (sel && sel.value && netboxLocation(sel.value)) {
+      populateRackOptions("rack", sel.value, "");
+      populateRuOptions("ru", sel.value, "", []);
+      populateNodeOptions("node", sel.value, "", []);
+    }
+  } catch (e) {
+    console.warn("NetBox snapshot unavailable, falling back to synthetic lists:", e.message);
+    _netboxData = null;
+  }
+  return _netboxData;
+}
+
+function netboxLocation(loc) {
+  return _netboxData && _netboxData.locations ? _netboxData.locations[loc] : null;
+}
+
+// Display rack names with an "R" prefix so they match the historical
+// task-log format (R001, R002, ...). NetBox stores them as bare numbers
+// (001, 002, ...) — netboxRackKey() strips the prefix when looking up
+// devices in the snapshot.
+function netboxRackKey(displayName) {
+  return displayName.replace(/^R/i, "");
+}
+
 function populateRackOptions(name, loc, currentVal) {
-  const max = RACK_LIMITS[loc];
   let items = [];
   let placeholder = "— Select rack —";
-  if (max) {
-    for (let i = 1; i <= max; i++) items.push("R" + String(i).padStart(3, "0"));
-  } else if (loc === "DH5" || loc === "DH6") {
-    placeholder = "Coming in a later version";
+  const nb = netboxLocation(loc);
+  if (nb && nb.racks) {
+    items = Object.keys(nb.racks).map(k => /^\d/.test(k) ? "R" + k : k).sort((a, b) => {
+      const na = parseInt((a.match(/\d+/) || [0])[0], 10);
+      const nb_ = parseInt((b.match(/\d+/) || [0])[0], 10);
+      return na - nb_ || a.localeCompare(b);
+    });
+    if (!items.length) placeholder = "— No racks in NetBox —";
   } else {
-    placeholder = "— N/A —";
+    const max = RACK_LIMITS[loc];
+    if (max) {
+      for (let i = 1; i <= max; i++) items.push("R" + String(i).padStart(3, "0"));
+    } else if (loc === "DH5" || loc === "DH6") {
+      placeholder = "Coming in a later version";
+    } else {
+      placeholder = "— N/A —";
+    }
   }
   comboSet(name, items, placeholder, currentVal);
 }
@@ -2422,11 +2497,38 @@ function getEditRack() { return comboGetValue("editRack"); }
 
 const RU_MAX = 52;
 
-function populateRuOptions(name, loc, currentVal) {
-  const enabled = !!RACK_LIMITS[loc];
+// Collect devices across the currently-selected racks for a location, or all racks if none selected.
+function netboxDevicesForRacks(loc, selectedRacks) {
+  const nb = netboxLocation(loc);
+  if (!nb || !nb.racks) return null;
+  const rackNames = (selectedRacks && selectedRacks.length)
+    ? selectedRacks.map(netboxRackKey)
+    : Object.keys(nb.racks);
+  const devs = [];
+  for (const r of rackNames) {
+    const rk = nb.racks[r];
+    if (rk && rk.devices) devs.push(...rk.devices);
+  }
+  return devs;
+}
+
+function populateRuOptions(name, loc, currentVal, selectedRacks) {
   let items = [];
   let placeholder = "— Select RU —";
-  if (enabled) {
+  const nbDevices = netboxDevicesForRacks(loc, selectedRacks);
+  if (nbDevices !== null) {
+    const positions = new Set();
+    for (const d of nbDevices) {
+      // NetBox returns position as a float (e.g. 10.0). Coerce to integer U;
+      // half-U devices round down to the U they start in.
+      if (d.position != null) positions.add(Math.floor(d.position));
+    }
+    items = Array.from(positions).sort((a, b) => a - b).map(p => "RU" + String(p).padStart(2, "0"));
+    if (!items.length) {
+      // Rack(s) exist but no devices with positions — let user pick any RU 1..52
+      for (let i = 1; i <= RU_MAX; i++) items.push("RU" + String(i).padStart(2, "0"));
+    }
+  } else if (RACK_LIMITS[loc]) {
     for (let i = 1; i <= RU_MAX; i++) items.push("RU" + String(i).padStart(2, "0"));
   } else if (loc === "DH5" || loc === "DH6") {
     placeholder = "Coming in a later version";
@@ -2442,11 +2544,18 @@ function getEditRu() { return comboGetValue("editRu"); }
 
 const NODE_MAX = 16;
 
-function populateNodeOptions(name, loc, currentVal) {
-  const enabled = !!RACK_LIMITS[loc];
+function populateNodeOptions(name, loc, currentVal, selectedRacks) {
   let items = [];
   let placeholder = "— Select Node —";
-  if (enabled) {
+  const nbDevices = netboxDevicesForRacks(loc, selectedRacks);
+  if (nbDevices !== null) {
+    const names = new Set();
+    for (const d of nbDevices) {
+      if (d.name) names.add(d.name);
+    }
+    items = Array.from(names).sort();
+    if (!items.length) placeholder = "— No devices in rack —";
+  } else if (RACK_LIMITS[loc]) {
     for (let i = 1; i <= NODE_MAX; i++) items.push("Node" + String(i).padStart(2, "0"));
   } else if (loc === "DH5" || loc === "DH6") {
     placeholder = "Coming in a later version";
@@ -3439,8 +3548,15 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v1.7.6";
+const CURRENT_VERSION = "v2.0.0";
 const VERSION_HISTORY = [
+  { version: "v2.0.0", date: "2026-06-15", features: [
+      "NetBox integration — Rack, RU, and Node selectors for DH1–DH6 now load from a real NetBox snapshot (docs/netbox.json) instead of synthetic R001..R320 / Node01..Node16 lists",
+      "Cascade: picking a rack narrows the RU list to U positions actually occupied in that rack and the Node list to the real device names mounted there",
+      "L3-Optics Cage and unknown locations keep the existing behavior (location-only entry) since they aren't tracked in NetBox",
+      "Falls back to the previous synthetic lists if netbox.json is missing or fails to load — page works on any deploy",
+      "New fetch_netbox.py script pulls site=evi01 locations, racks, and devices into docs/netbox.json; reads NETBOX_URL / NETBOX_TOKEN / NETBOX_SITE from env so no credentials ship in the repo"
+  ]},
   { version: "v1.7.6", date: "2026-05-20", features: [
       "Added automatic ID re-sequencing on every page load — records are sorted by entry_date (then saved_at) and renumbered 1 → N so IDs always match chronological order, even after exports/imports or out-of-sequence merges",
       "Fixes the long-standing mismatch where the JSON export from the site could produce records whose IDs no longer matched the date column (e.g. ID 1 on Apr 15, ID 5 on Apr 13) because mergeRemoteTasks only appended new IDs to the end of localStorage",

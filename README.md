@@ -29,6 +29,14 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.0.0 (2026-06-15)
+**NetBox integration for rack / RU / node selectors:**
+- The **Rack**, **RU**, and **Node** combos for **DH1–DH6** now load from a real NetBox snapshot (`docs/netbox.json`) instead of synthetic `R001..R320` / `Node01..Node16` lists.
+- **Cascade**: picking a rack narrows the RU list to U positions actually occupied in that rack and the Node list to the real device names mounted there.
+- **L3-Optics Cage** and unknown locations keep the existing behavior (location-only entry) since they aren't tracked in NetBox.
+- Falls back to the previous synthetic lists if `netbox.json` is missing or fails to load — the page still works on any deploy.
+- New `fetch_netbox.py` script pulls `site=evi01` locations, racks, and devices into `docs/netbox.json` from env vars (`NETBOX_URL`, `NETBOX_TOKEN`, `NETBOX_SITE`) — no credentials in the repo. See **NetBox Sync** below.
+
 ### v1.7.6 (2026-05-20)
 **Auto-renumber IDs by date on page load:**
 - Records are now **sorted by `entry_date` (then `saved_at`) and renumbered `1 → N`** every time the page loads, so IDs always match chronological order.
@@ -318,6 +326,21 @@ The app runs entirely in the browser. To use:
 2. Open `docs/index.html` locally
 
 Records are stored in the browser's localStorage. The `docs/data.json` file provides seed data that auto-merges on first load.
+
+## NetBox Sync
+
+The Rack / RU / Node selectors for DH1–DH6 are populated from a snapshot of NetBox (`docs/netbox.json`). To refresh inventory:
+
+```sh
+export NETBOX_URL=https://coreweave.cloud.netboxapp.com
+export NETBOX_TOKEN=<paste from https://coreweave.cloud.netboxapp.com/user/api-tokens/>
+export NETBOX_SITE=evi01         # optional, defaults to evi01
+
+python3 fetch_netbox.py
+git add docs/netbox.json && git commit -m "Sync NetBox inventory" && git push
+```
+
+The script discovers Locations under `site=evi01`, pulls every rack and device, and writes the snapshot. The token never enters the repo — only `docs/netbox.json` is committed. L3-Optics Cage is skipped (not tracked in NetBox); the UI keeps the existing manual behavior for that location. If `netbox.json` is missing the page falls back to the legacy synthetic lists, so the app still works on a fresh clone before the first sync.
 
 ## Tech Stack
 
