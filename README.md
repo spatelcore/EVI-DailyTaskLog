@@ -29,6 +29,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.1.1 (2026-06-16)
+**Escort duration auto-calc:**
+- ESCORTING popup now shows a **live Duration** row that updates as you fill in Start Time and End Time (e.g. `1h 30m`) — no manual math.
+- Duration is appended to the saved **Add. Info** field too: `09:30–11:00 (1h 30m) | …` so it's visible in the table without re-opening the record.
+- Overnight escorts (start 23:30, end 01:15) wrap past midnight correctly → `1h 45m`, not a negative value.
+
 ### v2.1.0 (2026-06-16)
 **New ESCORTING quick-entry popup:**
 - New **ESCORTING** button on the entry form (next to **WALKTHROUGH**) opens a popup for logging vendor / visitor escorts.

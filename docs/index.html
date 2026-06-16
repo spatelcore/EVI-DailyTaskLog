@@ -1798,9 +1798,13 @@
       </div>
       <div class="form-row">
         <label>Start Time</label>
-        <input type="time" id="escortingStart" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+        <input type="time" id="escortingStart" oninput="updateEscortingDuration()" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
         <label style="margin-left:12px;">End Time</label>
-        <input type="time" id="escortingEnd" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+        <input type="time" id="escortingEnd" oninput="updateEscortingDuration()" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+      </div>
+      <div class="form-row">
+        <label>Duration</label>
+        <div id="escortingDuration" style="flex:1; padding:8px; font-size:14px; font-weight:600; color:var(--accent);">—</div>
       </div>
       <div class="form-row">
         <label>Company</label>
@@ -3596,8 +3600,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v2.1.0";
+const CURRENT_VERSION = "v2.1.1";
 const VERSION_HISTORY = [
+  { version: "v2.1.1", date: "2026-06-16", features: [
+      "ESCORTING popup now shows live Duration as Start Time and End Time are filled in (e.g. \"1h 30m\") — no manual math",
+      "Duration is appended to the saved Add. Info field too: \"09:30–11:00 (1h 30m) | …\" so it's visible in the table without re-opening the record",
+      "Overnight escorts wrap past midnight correctly (start 23:30, end 01:15 → 1h 45m, not negative)"
+  ]},
   { version: "v2.1.0", date: "2026-06-16", features: [
       "Added ESCORTING button next to WALKTHROUGH on the entry form — opens a popup for logging vendor / visitor escorts",
       "Modal fields: Date, Data Hall (DH1–DH6), Start Time, End Time, Company, Add. Info",
@@ -3929,10 +3938,38 @@ function openEscorting() {
   $("escortingEnd").value = "";
   $("escortingCompany").value = "";
   $("escortingInfo").value = "";
+  updateEscortingDuration();
   $("escortingModal").classList.add("open");
   setTimeout(() => { $("escortingCompany").focus(); }, 50);
 }
 function closeEscorting() { $("escortingModal").classList.remove("open"); }
+
+// Compute the elapsed minutes between two HH:MM strings. Wraps past midnight
+// (e.g. start 23:30, end 01:15 → 105 min) so an overnight escort doesn't
+// show as negative. Returns null if either input is empty.
+function escortingMinutes(start, end) {
+  if (!start || !end) return null;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
+  let diff = (eh * 60 + em) - (sh * 60 + sm);
+  if (diff < 0) diff += 24 * 60;
+  return diff;
+}
+
+function formatEscortingDuration(minutes) {
+  if (minutes == null) return "—";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h && m) return h + "h " + m + "m";
+  if (h) return h + "h";
+  return m + "m";
+}
+
+function updateEscortingDuration() {
+  const mins = escortingMinutes($("escortingStart").value, $("escortingEnd").value);
+  $("escortingDuration").textContent = formatEscortingDuration(mins);
+}
 
 function saveEscorting() {
   const date = $("escortingDate").value;
@@ -3944,10 +3981,14 @@ function saveEscorting() {
   const info = $("escortingInfo").value.trim();
   const locEl = document.querySelector('input[name="escortingLocation"]:checked');
   const location = locEl ? locEl.value : "DH1";
-  // Combine time range + free-text info into Add. Info so the existing
-  // table renders it without a schema change.
+  // Combine time range + duration + free-text info into Add. Info so the
+  // existing table renders it without a schema change.
   let addInfo = "";
-  if (start || end) addInfo = (start || "--:--") + "–" + (end || "--:--");
+  if (start || end) {
+    addInfo = (start || "--:--") + "–" + (end || "--:--");
+    const mins = escortingMinutes(start, end);
+    if (mins != null) addInfo += " (" + formatEscortingDuration(mins) + ")";
+  }
   if (info) addInfo += (addInfo ? " | " : "") + info;
   const rowId = addTask(
     date, "Escorting — " + company, location,
