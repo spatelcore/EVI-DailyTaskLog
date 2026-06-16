@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.1.0 (2026-06-16)
+**New ESCORTING quick-entry popup:**
+- New **ESCORTING** button on the entry form (next to **WALKTHROUGH**) opens a popup for logging vendor / visitor escorts.
+- Modal fields: **Date**, **Data Hall** (DH1–DH6 radio), **Start Time**, **End Time**, **Company**, **Add. Info**.
+- Save creates a task with description `Escorting — <Company>` and **Add. Info** storing the time range (`HH:MM–HH:MM`) plus any free-text notes. DC Code defaults to **EVI01**.
+- **Escape** key and overlay-click both close the popup — same UX as WALKTHROUGH and RECURRING.
+
 ### v2.0.0 (2026-06-15)
 **NetBox integration for rack / RU / node selectors:**
 - The **Rack**, **RU**, and **Node** combos for **DH1–DH6** now load from a real NetBox snapshot (`docs/netbox.json`) instead of synthetic `R001..R320` / `Node01..Node16` lists.
