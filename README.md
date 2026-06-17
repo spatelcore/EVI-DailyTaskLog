@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.1.3 (2026-06-17)
+**RU → Node auto-select:**
+- Picking an **RU** now auto-fills the **Node** combo with the device(s) at that U position in the selected rack(s). E.g. selecting `RU10` in `R001` auto-picks `dh1-con-a1-01-r001-us-central-07a`.
+- **Multi-RU** works the same way: select `RU10` + `RU14` and the Node combo populates with both devices.
+- **Manual override**: the Node combo stays interactive — click any node to add/remove (multi-select toggle) if the auto-pick is wrong.
+- Role row updates automatically to reflect the auto-selected node(s).
+
 ### v2.1.2 (2026-06-17)
 **Device Role display under the entry form:**
 - New **Role** row underneath the Location row shows the NetBox device role(s) (e.g. `T1`, `IB Switch`) for the currently-selected Node(s).

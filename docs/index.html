@@ -2445,6 +2445,8 @@ function onComboChanged(name) {
     populateRuOptions("ru", loc, "", racks);
     populateNodeOptions("node", loc, "", racks);
     updateRoleDisplay();
+  } else if (name === "ru") {
+    autoSelectNodesByRu();
   } else if (name === "node") {
     updateRoleDisplay();
   } else if (name === "editRack") {
@@ -2453,6 +2455,34 @@ function onComboChanged(name) {
     populateRuOptions("editRu", loc, "", racks);
     populateNodeOptions("editNode", loc, "", racks);
   }
+}
+
+// When the user picks one or more RUs, auto-fill the Node combo with the
+// device(s) whose NetBox position matches. Keeps the combo interactive so
+// the user can still toggle nodes on/off (or pick a completely different
+// node) if the auto-selection is wrong. No-op when no RU is selected.
+function autoSelectNodesByRu() {
+  const loc = $("locSelect") ? $("locSelect").value : "";
+  if (!loc) return;
+  const c = _comboReg.node;
+  if (!c) return;
+  const rus = getRuList();
+  if (!rus.length) return;
+  const racks = getRackList();
+  const devs = netboxDevicesForRacks(loc, racks);
+  if (!devs) return;
+  const targetPositions = new Set(
+    rus.map(r => parseInt(r.replace(/^RU/i, ""), 10)).filter(n => !isNaN(n))
+  );
+  const matched = devs
+    .filter(d => d.position != null && targetPositions.has(Math.floor(d.position)))
+    .map(d => d.name)
+    .filter(n => c.items.includes(n));
+  // Dedupe + sort for stable display
+  c.selected = Array.from(new Set(matched)).sort();
+  const inp = document.getElementById(c.inputId);
+  if (inp) inp.value = c.selected.join(", ");
+  updateRoleDisplay();
 }
 
 // Show the NetBox role(s) of the currently-selected node(s) underneath the
@@ -3629,8 +3659,14 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v2.1.2";
+const CURRENT_VERSION = "v2.1.3";
 const VERSION_HISTORY = [
+  { version: "v2.1.3", date: "2026-06-17", features: [
+      "Picking an RU now auto-fills the Node combo with the device(s) mounted at that U position in the selected rack(s) — e.g. selecting RU10 in R001 auto-picks dh1-con-a1-01-r001-us-central-07a",
+      "Multi-RU works the same way: select RU10 + RU14 and the Node combo populates with both devices",
+      "Selection is not locked — click any node in the Node combo to add/remove (multi-select toggle) if the auto-pick is wrong, just like before",
+      "Role row updates automatically to reflect the auto-selected node(s)"
+  ]},
   { version: "v2.1.2", date: "2026-06-17", features: [
       "New Role display row underneath the Location row — shows the NetBox device role(s) (e.g. T1, IB Switch) for the currently-selected Node(s)",
       "Updates live as you change Location, Rack, or Node selection. If multiple nodes are selected, unique roles are listed comma-separated (e.g. \"IB Switch, T1\")",
