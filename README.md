@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.1.2 (2026-06-17)
+**Device Role display under the entry form:**
+- New **Role** row underneath the Location row shows the NetBox device role(s) (e.g. `T1`, `IB Switch`) for the currently-selected Node(s).
+- Updates live as you change Location, Rack, or Node. If multiple nodes are selected, unique roles are listed comma-separated (e.g. `IB Switch, T1`).
+- **Informational only** — the role is NOT saved to the task record. Description / Add. Info / saved schema are unchanged.
+- Resets to `—` when the form is cleared or no node is selected.
+
 ### v2.1.1 (2026-06-16)
 **Escort duration auto-calc:**
 - ESCORTING popup now shows a **live Duration** row that updates as you fill in Start Time and End Time (e.g. `1h 30m`) — no manual math.

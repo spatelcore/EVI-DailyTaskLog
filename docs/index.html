@@ -1299,6 +1299,10 @@
           <input type="text" id="locOther" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">
         </div>
       </div>
+      <div class="form-row" id="roleRow">
+        <label>Role</label>
+        <div id="roleDisplay" style="flex:1; padding:6px 10px; font-size:13px; font-weight:600; color:var(--accent); background:var(--input-bg); border:1px dashed var(--input-border); border-radius:4px; min-height:28px; line-height:18px;" title="NetBox device role(s) for the selected node(s) — informational only, not saved with the entry">—</div>
+      </div>
       <div class="form-row">
         <label>DC Code</label>
         <input type="text" id="dcCode" value="EVI01" style="max-width:160px;">
@@ -2436,16 +2440,39 @@ function comboPick(name, val, addToSelection) {
 function onComboChanged(name) {
   if (name === "rack") {
     const loc = $("locSelect") ? $("locSelect").value : "";
-    if (!loc) return;
+    if (!loc) { updateRoleDisplay(); return; }
     const racks = getRackList();
     populateRuOptions("ru", loc, "", racks);
     populateNodeOptions("node", loc, "", racks);
+    updateRoleDisplay();
+  } else if (name === "node") {
+    updateRoleDisplay();
   } else if (name === "editRack") {
     const loc = getEditLocation();
     const racks = comboGetValues("editRack");
     populateRuOptions("editRu", loc, "", racks);
     populateNodeOptions("editNode", loc, "", racks);
   }
+}
+
+// Show the NetBox role(s) of the currently-selected node(s) underneath the
+// Node combo. Read-only and informational — NOT persisted with the task.
+function updateRoleDisplay() {
+  const el = document.getElementById("roleDisplay");
+  if (!el) return;
+  const loc = $("locSelect") ? $("locSelect").value : "";
+  const nodes = getNodeList();
+  if (!loc || !nodes.length) { el.textContent = "—"; return; }
+  const racks = getRackList();
+  const devs = netboxDevicesForRacks(loc, racks);
+  if (!devs) { el.textContent = "—"; return; }
+  const selected = new Set(nodes);
+  const roles = new Set();
+  for (const d of devs) {
+    if (selected.has(d.name) && d.role) roles.add(d.role);
+  }
+  if (!roles.size) { el.textContent = "—"; return; }
+  el.textContent = Array.from(roles).sort().join(", ");
 }
 
 function comboKey(e, name) {
@@ -2658,6 +2685,7 @@ setupOtherToggle("ruleLocation", "ruleLocOther");
       populateRackOptions("rack", sel.value, "");
       populateRuOptions("ru", sel.value, "");
       populateNodeOptions("node", sel.value, "");
+      updateRoleDisplay();
       updateSaveEntryDisabled();
     });
   }
@@ -2757,6 +2785,7 @@ function clearForm() {
   populateRackOptions("rack", "", "");
   populateRuOptions("ru", "", "");
   populateNodeOptions("node", "", "");
+  updateRoleDisplay();
   const today = localDateStr();
   $("entryDate").value = today;
   updateDateDisplay(today);
@@ -3600,8 +3629,14 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v2.1.1";
+const CURRENT_VERSION = "v2.1.2";
 const VERSION_HISTORY = [
+  { version: "v2.1.2", date: "2026-06-17", features: [
+      "New Role display row underneath the Location row — shows the NetBox device role(s) (e.g. T1, IB Switch) for the currently-selected Node(s)",
+      "Updates live as you change Location, Rack, or Node selection. If multiple nodes are selected, unique roles are listed comma-separated (e.g. \"IB Switch, T1\")",
+      "Role information is informational only — it is NOT saved to the task record. The Add. Info, Description, and existing schema are unchanged",
+      "Resets to \"—\" when the form is cleared or no node is selected"
+  ]},
   { version: "v2.1.1", date: "2026-06-16", features: [
       "ESCORTING popup now shows live Duration as Start Time and End Time are filled in (e.g. \"1h 30m\") — no manual math",
       "Duration is appended to the saved Add. Info field too: \"09:30–11:00 (1h 30m) | …\" so it's visible in the table without re-opening the record",
