@@ -1333,6 +1333,7 @@
       </div>
       <div class="btn-row">
         <button id="saveEntryBtn" class="btn btn-save" onclick="saveEntry()" disabled title="Choose a location to enable">SAVE ENTRY <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></button>
+        <span id="saveCountBadge" style="display:none; padding:6px 12px; background:var(--orange); color:#fff; font-weight:600; font-size:13px; border-radius:4px; align-self:center;" title="Number of records this save will create (rack × RU × node selections)"></span>
         <button class="btn btn-clear" onclick="clearForm()">CLEAR FORM</button>
         <span class="divider-v"></span>
         <button class="btn btn-blue" onclick="openRecurring()">RECURRING</button>
@@ -1579,6 +1580,16 @@
             <span class="theme-name">Teal</span>
           </div>
         </div>
+      </div>
+
+      <div class="settings-section" style="border-top:1px solid var(--border-col); padding-top:14px; margin-top:18px;">
+        <h3 style="color:var(--red);">Danger Zone — Purge by Date</h3>
+        <div style="font-size:13px; color:var(--text); opacity:0.8; margin-bottom:10px;">Delete every log entry for a specific date. Use this to clean up accidental duplicates. <b>Cannot be undone.</b></div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input type="date" id="purgeDateInput" oninput="updatePurgePreview()" style="padding:8px 10px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+          <button class="btn btn-clear" style="background:var(--red); color:#fff;" onclick="purgeByDate()">PURGE ENTRIES</button>
+        </div>
+        <div id="purgePreview" style="margin-top:8px; font-size:12px; color:var(--text); opacity:0.8;"></div>
       </div>
     </div>
     <div class="modal-actions">
@@ -2524,7 +2535,7 @@ function comboPick(name, val, addToSelection) {
 function onComboChanged(name) {
   if (name === "rack") {
     const loc = $("locSelect") ? $("locSelect").value : "";
-    if (!loc) { updateRoleDisplay(); return; }
+    if (!loc) { updateRoleDisplay(); updateSaveCountBadge(); return; }
     const racks = getRackList();
     populateRuOptions("ru", loc, "", racks);
     populateNodeOptions("node", loc, "", racks);
@@ -2539,6 +2550,7 @@ function onComboChanged(name) {
     populateRuOptions("editRu", loc, "", racks);
     populateNodeOptions("editNode", loc, "", racks);
   }
+  if (name === "rack" || name === "ru" || name === "node") updateSaveCountBadge();
 }
 
 // When the user picks one or more RUs, auto-fill the Node combo with the
@@ -2567,6 +2579,7 @@ function autoSelectNodesByRu() {
   const inp = document.getElementById(c.inputId);
   if (inp) inp.value = c.selected.join(", ");
   updateRoleDisplay();
+  updateSaveCountBadge();
 }
 
 // Show the NetBox role(s) of the currently-selected node(s) underneath the
@@ -3167,6 +3180,26 @@ function updateSaveEntryDisabled() {
   const disabled = !v || (v === "Other" && !$("locOther").value.trim());
   btn.disabled = disabled;
   btn.classList.toggle("is-disabled", disabled);
+  updateSaveCountBadge();
+}
+
+// Show how many records THIS save will create based on current rack/RU/node
+// multi-selections (cartesian product). Visible only when count > 1, so a
+// surprise multi-save (e.g. RU auto-selected several devices) is obvious
+// before clicking SAVE.
+function updateSaveCountBadge() {
+  const badge = $("saveCountBadge");
+  if (!badge) return;
+  const racks = (typeof getRackList === "function" ? getRackList() : []).length || 1;
+  const rus   = (typeof getRuList   === "function" ? getRuList()   : []).length || 1;
+  const nodes = (typeof getNodeList === "function" ? getNodeList() : []).length || 1;
+  const n = racks * rus * nodes;
+  if (n > 1) {
+    badge.textContent = "WILL SAVE " + n + " ENTRIES (" + racks + " rack × " + rus + " RU × " + nodes + " node)";
+    badge.style.display = "inline-block";
+  } else {
+    badge.style.display = "none";
+  }
 }
 
 function getEditLocation() {
@@ -3840,9 +3873,48 @@ setTheme(savedTheme);
 
 function openSettings() {
   refreshTravelingSettingsPanel();
+  const purgeInp = $("purgeDateInput");
+  if (purgeInp) { purgeInp.value = ""; }
+  const prev = $("purgePreview");
+  if (prev) prev.innerHTML = "";
   $("settingsModal").classList.add("open");
 }
 function closeSettings() { $("settingsModal").classList.remove("open"); }
+
+function updatePurgePreview() {
+  const date = $("purgeDateInput").value;
+  const prev = $("purgePreview");
+  if (!prev) return;
+  if (!date) { prev.innerHTML = ""; return; }
+  const matches = loadTasks().filter(t => t.entry_date === date);
+  if (!matches.length) {
+    prev.innerHTML = "<i>No entries found for " + date + ".</i>";
+  } else {
+    prev.innerHTML = "<b>" + matches.length + " entr" + (matches.length === 1 ? "y" : "ies") + "</b> on " + date + " will be deleted.";
+  }
+}
+
+async function purgeByDate() {
+  const date = $("purgeDateInput").value;
+  if (!date) { toast("Pick a date first.", "error"); return; }
+  const tasks = loadTasks();
+  const matches = tasks.filter(t => t.entry_date === date);
+  if (!matches.length) { toast("No entries on " + date + ".", "error"); return; }
+  if (!confirm("Delete ALL " + matches.length + " entries on " + date + "?\n\nThis cannot be undone.")) return;
+  const keep = tasks.filter(t => t.entry_date !== date);
+  saveTasks(keep);
+  // Clean up attachments tied to the deleted task IDs too.
+  try {
+    for (const t of matches) await idbDeleteByTask(t.id);
+    await refreshAttachmentsCache();
+  } catch (e) {}
+  // Re-sequence IDs so the table stays clean.
+  renumberByDate();
+  toast("Purged " + matches.length + " entries from " + date + ".", "success");
+  updatePurgePreview();
+  refreshActiveTab();
+  updateStats();
+}
 
 // ── Search / Filter ──────────────────────────────
 function filterTable() {
@@ -4151,8 +4223,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v2.2.0";
+const CURRENT_VERSION = "v2.2.1";
 const VERSION_HISTORY = [
+  { version: "v2.2.1", date: "2026-06-23", features: [
+      "Added live \"WILL SAVE N ENTRIES\" badge next to SAVE ENTRY — visible only when Rack × RU × Node multi-selection would create more than one record. Surfaces accidental multi-saves (e.g. selecting an RU whose position has several stacked devices) BEFORE clicking SAVE",
+      "Badge reads e.g. \"WILL SAVE 5 ENTRIES (1 rack × 1 RU × 5 node)\" — the breakdown shows which combo is fanning out so you can prune the multi-select",
+      "Added Settings → Danger Zone → Purge by Date — pick a date and delete every entry on that date in one click. Shows a live preview count, asks for confirmation, then renumbers the remaining IDs to stay in chronological order. Use to clean up accidental duplicates"
+  ]},
   { version: "v2.2.0", date: "2026-06-22", features: [
       "Added Traveling Site feature in Settings — log work from another datacenter without losing your home (EVI01) data",
       "Settings → Traveling Site shows current state. \"Travel to another site\" opens a dialog with a site picker (sites from netbox.json), start date, and end date",

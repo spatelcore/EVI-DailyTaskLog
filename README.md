@@ -29,6 +29,11 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.2.1 (2026-06-23)
+**Visibility for multi-saves + cleanup tool:**
+- New **WILL SAVE N ENTRIES** badge appears next to **SAVE ENTRY** whenever the current Rack × RU × Node multi-selection would create more than one record. Breakdown reads `1 rack × 1 RU × 5 node = 5 entries` so you can see which combo is fanning out.
+- New **Settings → Danger Zone → Purge by Date** — pick a date, see the live preview count, click **PURGE ENTRIES** to delete every entry on that date in one shot. Asks for confirmation, then re-sequences the remaining IDs to stay in chronological order.
+
 ### v2.2.0 (2026-06-22)
 **Traveling Site — log work from a non-home datacenter:**
 - New **Traveling Site** section in Settings. Press **TRAVEL TO ANOTHER SITE** to pick a site (from `netbox.json`), set start + end dates, and start a trip.
