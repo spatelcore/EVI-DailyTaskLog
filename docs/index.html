@@ -2664,6 +2664,27 @@ let _netboxData = null;
 let _netboxLoaded = false;
 const HOME_SITE_DEFAULT = "EVI01";
 
+// Map NetBox slug → user-facing facility code. Add an entry here when the
+// slug NetBox uses internally differs from the short name shown in the UI.
+const SITE_LABEL_OVERRIDES = {
+  "us-central-07a": "EVI01",
+  "us-east-13a": "US-CDZ01",
+};
+const SITE_SLUG_OVERRIDES = (() => {
+  const m = {};
+  for (const [slug, label] of Object.entries(SITE_LABEL_OVERRIDES)) m[label.toUpperCase()] = slug;
+  return m;
+})();
+function siteLabelFromSlug(slug) {
+  if (!slug) return "";
+  return SITE_LABEL_OVERRIDES[slug.toLowerCase()] || slug.toUpperCase();
+}
+function siteSlugFromLabel(label) {
+  if (!label) return "";
+  const up = label.toUpperCase();
+  return SITE_SLUG_OVERRIDES[up] || label.toLowerCase();
+}
+
 async function loadNetboxData() {
   if (_netboxLoaded) return _netboxData;
   _netboxLoaded = true;
@@ -2708,28 +2729,36 @@ function normalizeNetboxShape(raw) {
   return raw || { home_site: HOME_SITE_DEFAULT.toLowerCase(), sites: {} };
 }
 
+// getHomeSite / getActiveSite return the user-facing LABEL (e.g. "EVI01").
+// Data lookups use getActiveSiteSlug() to index _netboxData.sites by slug.
 function getHomeSite() {
-  if (_netboxData && _netboxData.home_site) return _netboxData.home_site.toUpperCase();
+  if (_netboxData && _netboxData.home_site) return siteLabelFromSlug(_netboxData.home_site);
   return HOME_SITE_DEFAULT;
 }
 
 // Active site = traveling site if a trip is currently active, otherwise home.
 function getActiveSite() {
   const t = getTravelingState();
-  return t ? t.site.toUpperCase() : getHomeSite();
+  return t ? siteLabelFromSlug(t.site) : getHomeSite();
+}
+
+function getActiveSiteSlug() {
+  const t = getTravelingState();
+  if (t) return (t.site || "").toLowerCase();
+  if (_netboxData && _netboxData.home_site) return _netboxData.home_site.toLowerCase();
+  return siteSlugFromLabel(HOME_SITE_DEFAULT);
 }
 
 function isTraveling() { return !!getTravelingState(); }
 
 function getActiveSiteData() {
   if (!_netboxData || !_netboxData.sites) return null;
-  const slug = getActiveSite().toLowerCase();
-  return _netboxData.sites[slug] || null;
+  return _netboxData.sites[getActiveSiteSlug()] || null;
 }
 
 function listAvailableSites() {
   if (!_netboxData || !_netboxData.sites) return [];
-  return Object.keys(_netboxData.sites).map(s => s.toUpperCase()).sort();
+  return Object.keys(_netboxData.sites).map(siteLabelFromSlug).sort();
 }
 
 function netboxLocation(loc) {
@@ -2783,9 +2812,10 @@ function updateTravelingRibbon() {
     ribbon.style.display = "none";
     banner.innerHTML = "EVI DAILY TASK LOG &mdash; Datacenter " + getHomeSite();
   } else {
+    const label = siteLabelFromSlug(t.site);
     ribbon.style.display = "block";
-    ribbon.textContent = "✈  TRAVELING AT " + t.site.toUpperCase() + " — " + formatTravelRange(t.startDate, t.endDate) + " (click for trip controls)";
-    banner.innerHTML = "EVI DAILY TASK LOG &mdash; Traveling at " + t.site.toUpperCase();
+    ribbon.textContent = "✈  TRAVELING AT " + label + " — " + formatTravelRange(t.startDate, t.endDate) + " (click for trip controls)";
+    banner.innerHTML = "EVI DAILY TASK LOG &mdash; Traveling at " + label;
   }
 }
 
@@ -2798,7 +2828,7 @@ function refreshTravelingSettingsPanel() {
   const home = getHomeSite();
   const sites = listAvailableSites();
   if (t) {
-    status.innerHTML = "<b>Status:</b> Traveling at <b>" + t.site.toUpperCase() + "</b><br>"
+    status.innerHTML = "<b>Status:</b> Traveling at <b>" + siteLabelFromSlug(t.site) + "</b><br>"
       + "<b>Trip:</b> " + formatTravelRange(t.startDate, t.endDate);
     actions.innerHTML =
       '<button class="btn btn-blue" onclick="openTravelExtend()">EXTEND</button>'
@@ -2817,7 +2847,7 @@ function refreshTravelingSettingsPanel() {
     histBox.innerHTML = '<span style="opacity:0.6;">No past trips yet.</span>';
   } else {
     histBox.innerHTML = hist.slice().reverse().slice(0, 8).map(h =>
-      "• <b>" + h.site.toUpperCase() + "</b> &nbsp; " + formatTravelRange(h.startDate, h.endDate || h.actualEndDate || "—")
+      "• <b>" + siteLabelFromSlug(h.site) + "</b> &nbsp; " + formatTravelRange(h.startDate, h.endDate || h.actualEndDate || "—")
     ).join("<br>");
   }
 }
@@ -2825,13 +2855,14 @@ function refreshTravelingSettingsPanel() {
 function openTravelStart() {
   const sel = $("travelSiteSelect");
   const home = getHomeSite();
-  const sites = listAvailableSites().filter(s => s !== home);
-  if (!sites.length) {
+  // Build [label, slug] pairs for every site except home.
+  const otherLabels = listAvailableSites().filter(s => s !== home);
+  if (!otherLabels.length) {
     toast("No other sites available. Run fetch_netbox.py with multiple sites first.", "error");
     return;
   }
   sel.innerHTML = '<option value="" disabled selected>-- Choose a site --</option>'
-    + sites.map(s => '<option value="' + s + '">' + s + '</option>').join("");
+    + otherLabels.map(label => '<option value="' + siteSlugFromLabel(label) + '">' + label + '</option>').join("");
   $("travelStartDate").value = todayIsoDate();
   $("travelEndDate").value = isoPlusDays(todayIsoDate(), 7);
   $("travelStartModal").classList.add("open");
@@ -2839,22 +2870,22 @@ function openTravelStart() {
 function closeTravelStart() { $("travelStartModal").classList.remove("open"); }
 
 function confirmTravelStart() {
-  const site = $("travelSiteSelect").value;
+  const siteSlug = $("travelSiteSelect").value;
   const startDate = $("travelStartDate").value;
   const endDate = $("travelEndDate").value;
-  if (!site) { toast("Choose a site to travel to.", "error"); return; }
+  if (!siteSlug) { toast("Choose a site to travel to.", "error"); return; }
   if (!startDate) { toast("Start date is required.", "error"); return; }
   if (endDate && endDate < startDate) { toast("End date must be on or after the start date.", "error"); return; }
-  setTravelingState({ site, startDate, endDate, beganAt: new Date().toISOString() });
+  setTravelingState({ site: siteSlug, startDate, endDate, beganAt: new Date().toISOString() });
   closeTravelStart();
   applyActiveSiteToUI();
   refreshTravelingSettingsPanel();
-  toast("Now traveling at " + site + ".", "success");
+  toast("Now traveling at " + siteLabelFromSlug(siteSlug) + ".", "success");
 }
 
 function openTravelExtend() {
   const t = getTravelingState(); if (!t) return;
-  $("travelExtendInfo").innerHTML = "<b>" + t.site.toUpperCase() + "</b> &nbsp; " + formatTravelRange(t.startDate, t.endDate);
+  $("travelExtendInfo").innerHTML = "<b>" + siteLabelFromSlug(t.site) + "</b> &nbsp; " + formatTravelRange(t.startDate, t.endDate);
   $("travelExtendDate").value = t.endDate || isoPlusDays(todayIsoDate(), 7);
   $("travelExtendModal").classList.add("open");
 }
@@ -2874,7 +2905,7 @@ function confirmTravelExtend() {
 
 function openTravelEnd() {
   const t = getTravelingState(); if (!t) return;
-  $("travelEndInfo").innerHTML = "End your trip at <b>" + t.site.toUpperCase() + "</b>?<br>"
+  $("travelEndInfo").innerHTML = "End your trip at <b>" + siteLabelFromSlug(t.site) + "</b>?<br>"
     + "<span style=\"opacity:0.8;\">Trip: " + formatTravelRange(t.startDate, t.endDate) + "</span>";
   $("travelEndModal").classList.add("open");
 }
