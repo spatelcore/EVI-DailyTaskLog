@@ -1236,11 +1236,13 @@
 <body>
 
 <div class="banner">
-  <span class="banner-title">EVI DAILY TASK LOG &mdash; Datacenter EVI01</span>
+  <span class="banner-title" id="bannerTitle">EVI DAILY TASK LOG &mdash; Datacenter EVI01</span>
   <button class="settings-btn" id="settingsBtn" onclick="openSettings()" title="Settings" aria-label="Settings">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .31.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
   </button>
 </div>
+
+<div id="travelingRibbon" style="display:none; background:var(--orange); color:#fff; text-align:center; padding:6px 16px; font-size:13px; font-weight:600; letter-spacing:0.3px; cursor:pointer;" onclick="openSettings()" title="Click to manage your trip in Settings"></div>
 
 <div class="container">
   <div class="form-section">
@@ -1531,6 +1533,16 @@
       <button class="modal-close" onclick="closeSettings()">&times;</button>
     </div>
     <div class="modal-body">
+      <div class="settings-section" id="travelingSection">
+        <h3>Traveling Site</h3>
+        <div id="travelingStatus" style="padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; margin-bottom:10px; font-size:14px; line-height:1.5;"></div>
+        <div id="travelingActions" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;"></div>
+        <div id="travelingHistoryWrap" style="margin-top:14px;">
+          <div style="font-size:12px; font-weight:600; color:var(--text); opacity:0.7; margin-bottom:6px;">RECENT TRIPS</div>
+          <div id="travelingHistory" style="font-size:12px; color:var(--text); opacity:0.85;"></div>
+        </div>
+      </div>
+
       <div class="settings-section">
         <h3>Theme</h3>
         <div class="theme-grid" id="themeGrid">
@@ -1571,6 +1583,76 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-clear" onclick="closeSettings()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Travel Start Modal -->
+<div class="modal-overlay" id="travelStartModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>TRAVEL TO ANOTHER SITE</h2>
+      <button class="modal-close" onclick="closeTravelStart()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Site</label>
+        <select id="travelSiteSelect" style="flex:1; padding:8px 10px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+          <option value="" disabled selected>-- Choose a site --</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Start Date</label>
+        <input type="date" id="travelStartDate" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+      </div>
+      <div class="form-row">
+        <label>End Date</label>
+        <input type="date" id="travelEndDate" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+      </div>
+      <div class="bulk-hint">While traveling, the form's location list and Rack/RU/Node selectors load from the chosen site's NetBox data. DC Code defaults to the site code. End the trip from Settings when you return.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" onclick="confirmTravelStart()">START TRAVELING</button>
+      <button class="btn btn-clear" onclick="closeTravelStart()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Travel Extend Modal -->
+<div class="modal-overlay" id="travelExtendModal">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h2>EXTEND TRAVELING DATE</h2>
+      <button class="modal-close" onclick="closeTravelExtend()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="travelExtendInfo" style="padding:10px; background:var(--input-bg); border-radius:4px; margin-bottom:14px; font-size:13px;"></div>
+      <div class="form-row">
+        <label>New End Date</label>
+        <input type="date" id="travelExtendDate" style="flex:1; padding:8px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" onclick="confirmTravelExtend()">UPDATE END DATE</button>
+      <button class="btn btn-clear" onclick="closeTravelExtend()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Travel End Confirmation Modal -->
+<div class="modal-overlay" id="travelEndModal">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h2>END TRAVELING?</h2>
+      <button class="modal-close" onclick="closeTravelEnd()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="travelEndInfo" style="font-size:14px; line-height:1.5;"></div>
+      <div class="bulk-hint" style="margin-top:10px;">Saved records logged at the traveling site stay in your log — they aren't deleted. The form returns to your home site.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" style="background:var(--red);" onclick="confirmTravelEnd()">END TRAVELING</button>
+      <button class="btn btn-clear" onclick="closeTravelEnd()">CANCEL</button>
     </div>
   </div>
 </div>
@@ -1678,7 +1760,7 @@
       </div>
       <div class="form-row">
         <label>Location</label>
-        <div class="radio-group">
+        <div class="radio-group" id="ruleLocGroup">
           <input type="radio" name="ruleLocation" id="rule-loc-DH1" value="DH1" checked><label for="rule-loc-DH1">DH1</label>
           <input type="radio" name="ruleLocation" id="rule-loc-DH2" value="DH2"><label for="rule-loc-DH2">DH2</label>
           <input type="radio" name="ruleLocation" id="rule-loc-DH3" value="DH3"><label for="rule-loc-DH3">DH3</label>
@@ -1752,7 +1834,7 @@
       </div>
       <div class="form-row">
         <label>Data Hall</label>
-        <div class="radio-group">
+        <div class="radio-group" id="walkthroughLocGroup">
           <input type="radio" name="walkthroughLocation" id="wt-loc-DH1" value="DH1" checked><label for="wt-loc-DH1">DH1</label>
           <input type="radio" name="walkthroughLocation" id="wt-loc-DH2" value="DH2"><label for="wt-loc-DH2">DH2</label>
           <input type="radio" name="walkthroughLocation" id="wt-loc-DH3" value="DH3"><label for="wt-loc-DH3">DH3</label>
@@ -1791,7 +1873,7 @@
       </div>
       <div class="form-row">
         <label>Data Hall</label>
-        <div class="radio-group">
+        <div class="radio-group" id="escortingLocGroup">
           <input type="radio" name="escortingLocation" id="esc-loc-DH1" value="DH1" checked><label for="esc-loc-DH1">DH1</label>
           <input type="radio" name="escortingLocation" id="esc-loc-DH2" value="DH2"><label for="esc-loc-DH2">DH2</label>
           <input type="radio" name="escortingLocation" id="esc-loc-DH3" value="DH3"><label for="esc-loc-DH3">DH3</label>
@@ -2270,10 +2352,12 @@ function init() {
     recallAll();
     updateStats();
   };
-  // Load NetBox snapshot in parallel with data.json. The location-change
-  // handler reads _netboxData when the user picks a location, so we just
-  // need it loaded before the user interacts — no re-render required.
-  loadNetboxData();
+  // Show the traveling ribbon immediately if a trip is active (state is in
+  // localStorage — doesn't depend on NetBox load).
+  updateTravelingRibbon();
+  // Load NetBox snapshot in parallel with data.json. The loader calls
+  // refreshLocationOptions() once the snapshot is in.
+  loadNetboxData().then(() => applyActiveSiteToUI());
   fetch("data.json").then(r => r.json()).then(async data => {
     if (data.tasks && data.tasks.length) mergeRemoteTasks(data.tasks);
     await boot();
@@ -2533,11 +2617,73 @@ function comboGetValues(name) {
   return c.items.includes(v) ? [v] : [];
 }
 
+// ── Traveling site state ────────────────────────────
+// Persisted in localStorage so the trip survives reload. Past trips are kept
+// in TRAVELING_HISTORY_KEY for display in Settings; saved task records are
+// NEVER touched when a trip ends — only the active state is cleared.
+const TRAVELING_STATE_KEY = "evi_traveling_state";
+const TRAVELING_HISTORY_KEY = "evi_traveling_history";
+
+function getTravelingState() {
+  try {
+    const raw = localStorage.getItem(TRAVELING_STATE_KEY);
+    if (!raw) return null;
+    const t = JSON.parse(raw);
+    if (!t || !t.site || !t.startDate) return null;
+    return t;
+  } catch (e) { return null; }
+}
+
+function setTravelingState(state) {
+  if (!state) localStorage.removeItem(TRAVELING_STATE_KEY);
+  else localStorage.setItem(TRAVELING_STATE_KEY, JSON.stringify(state));
+}
+
+function getTravelingHistory() {
+  try {
+    const raw = localStorage.getItem(TRAVELING_HISTORY_KEY);
+    return raw ? (JSON.parse(raw) || []) : [];
+  } catch (e) { return []; }
+}
+
+function appendTravelingHistory(trip) {
+  const hist = getTravelingHistory();
+  hist.push(trip);
+  // Cap at 50 trips to keep localStorage manageable.
+  while (hist.length > 50) hist.shift();
+  localStorage.setItem(TRAVELING_HISTORY_KEY, JSON.stringify(hist));
+}
+
 // ── NetBox snapshot loader ──────────────────────────
 // docs/netbox.json is produced by fetch_netbox.py and committed to the repo.
-// Shape: { fetched_at, site, locations: { "DH1": { racks: { "R001": { devices: [...] } } } } }
+// Multi-site shape:
+//   { home_site: "evi01", sites: { evi01: { locations: {...} }, evi02: {...} } }
+// Legacy shape (also supported):
+//   { site: "evi01", locations: {...} }
 let _netboxData = null;
 let _netboxLoaded = false;
+const HOME_SITE_DEFAULT = "EVI01";
+
+// Map NetBox slug → user-facing facility code. Add an entry here when the
+// slug NetBox uses internally differs from the short name shown in the UI.
+const SITE_LABEL_OVERRIDES = {
+  "us-central-07a": "EVI01",
+  "us-east-13a": "US-CDZ01",
+};
+const SITE_SLUG_OVERRIDES = (() => {
+  const m = {};
+  for (const [slug, label] of Object.entries(SITE_LABEL_OVERRIDES)) m[label.toUpperCase()] = slug;
+  return m;
+})();
+function siteLabelFromSlug(slug) {
+  if (!slug) return "";
+  return SITE_LABEL_OVERRIDES[slug.toLowerCase()] || slug.toUpperCase();
+}
+function siteSlugFromLabel(label) {
+  if (!label) return "";
+  const up = label.toUpperCase();
+  return SITE_SLUG_OVERRIDES[up] || label.toLowerCase();
+}
 
 async function loadNetboxData() {
   if (_netboxLoaded) return _netboxData;
@@ -2545,11 +2691,15 @@ async function loadNetboxData() {
   try {
     const resp = await fetch("netbox.json", { cache: "no-cache" });
     if (!resp.ok) throw new Error("HTTP " + resp.status);
-    _netboxData = await resp.json();
+    const raw = await resp.json();
+    _netboxData = normalizeNetboxShape(raw);
+    const homeSite = (_netboxData.home_site || HOME_SITE_DEFAULT).toUpperCase();
+    const siteCount = Object.keys(_netboxData.sites || {}).length;
     console.log("NetBox snapshot loaded:", _netboxData.fetched_at,
-                Object.keys(_netboxData.locations || {}).length, "location(s)");
+                siteCount, "site(s), home=" + homeSite);
     // If the user already picked a location before the snapshot arrived,
     // swap the synthetic rack list for the real one silently.
+    refreshLocationOptions();
     const sel = $("locSelect");
     if (sel && sel.value && netboxLocation(sel.value)) {
       populateRackOptions("rack", sel.value, "");
@@ -2563,8 +2713,341 @@ async function loadNetboxData() {
   return _netboxData;
 }
 
+// Normalize legacy single-site shape to multi-site shape so the rest of the
+// code only deals with one layout.
+function normalizeNetboxShape(raw) {
+  if (raw && raw.sites && typeof raw.sites === "object") return raw;
+  if (raw && raw.locations) {
+    const slug = (raw.site || HOME_SITE_DEFAULT).toLowerCase();
+    return {
+      fetched_at: raw.fetched_at,
+      source: raw.source,
+      home_site: slug,
+      sites: { [slug]: { slug, fetched_at: raw.fetched_at, locations: raw.locations } },
+    };
+  }
+  return raw || { home_site: HOME_SITE_DEFAULT.toLowerCase(), sites: {} };
+}
+
+// getHomeSite / getActiveSite return the user-facing LABEL (e.g. "EVI01").
+// Data lookups use getActiveSiteSlug() to index _netboxData.sites by slug.
+function getHomeSite() {
+  if (_netboxData && _netboxData.home_site) return siteLabelFromSlug(_netboxData.home_site);
+  return HOME_SITE_DEFAULT;
+}
+
+// Active site = traveling site if a trip is currently active, otherwise home.
+function getActiveSite() {
+  const t = getTravelingState();
+  return t ? siteLabelFromSlug(t.site) : getHomeSite();
+}
+
+function getActiveSiteSlug() {
+  const t = getTravelingState();
+  if (t) return (t.site || "").toLowerCase();
+  if (_netboxData && _netboxData.home_site) return _netboxData.home_site.toLowerCase();
+  return siteSlugFromLabel(HOME_SITE_DEFAULT);
+}
+
+function isTraveling() { return !!getTravelingState(); }
+
+function getActiveSiteData() {
+  if (!_netboxData || !_netboxData.sites) return null;
+  return _netboxData.sites[getActiveSiteSlug()] || null;
+}
+
+function listAvailableSites() {
+  if (!_netboxData || !_netboxData.sites) return [];
+  return Object.keys(_netboxData.sites).map(siteLabelFromSlug).sort();
+}
+
 function netboxLocation(loc) {
-  return _netboxData && _netboxData.locations ? _netboxData.locations[loc] : null;
+  const site = getActiveSiteData();
+  return site && site.locations ? site.locations[loc] : null;
+}
+
+// Locations available for the active site, plus L3-Optics Cage when home
+// (it's a manual entry that isn't in NetBox). Sorted: data halls first by
+// number, then alphabetical for everything else.
+function listActiveSiteLocations() {
+  const site = getActiveSiteData();
+  const locs = site && site.locations ? Object.keys(site.locations) : [];
+  if (getActiveSite() === HOME_SITE_DEFAULT && !locs.includes("L3-Optics Cage")) {
+    locs.push("L3-Optics Cage");
+  }
+  return locs.sort((a, b) => {
+    const ma = a.match(/^DH(\d+)$/i);
+    const mb = b.match(/^DH(\d+)$/i);
+    if (ma && mb) return parseInt(ma[1], 10) - parseInt(mb[1], 10);
+    if (ma) return -1;
+    if (mb) return 1;
+    return a.localeCompare(b);
+  });
+}
+
+// ── Traveling Site UI ───────────────────────────────
+function todayIsoDate() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+function isoPlusDays(iso, days) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate() + days);
+  return dt.getFullYear() + "-" + String(dt.getMonth()+1).padStart(2,"0") + "-" + String(dt.getDate()).padStart(2,"0");
+}
+
+function formatTravelRange(start, end) {
+  if (!end) return start + " → (no end date)";
+  return start + " → " + end;
+}
+
+function updateTravelingRibbon() {
+  const ribbon = $("travelingRibbon");
+  const banner = $("bannerTitle");
+  if (!ribbon || !banner) return;
+  const t = getTravelingState();
+  if (!t) {
+    ribbon.style.display = "none";
+    banner.innerHTML = "EVI DAILY TASK LOG &mdash; Datacenter " + getHomeSite();
+  } else {
+    const label = siteLabelFromSlug(t.site);
+    ribbon.style.display = "block";
+    ribbon.textContent = "✈  TRAVELING AT " + label + " — " + formatTravelRange(t.startDate, t.endDate) + " (click for trip controls)";
+    banner.innerHTML = "EVI DAILY TASK LOG &mdash; Traveling at " + label;
+  }
+}
+
+function refreshTravelingSettingsPanel() {
+  const status = $("travelingStatus");
+  const actions = $("travelingActions");
+  const histBox = $("travelingHistory");
+  if (!status || !actions) return;
+  const t = getTravelingState();
+  const home = getHomeSite();
+  const sites = listAvailableSites();
+  if (t) {
+    status.innerHTML = "<b>Status:</b> Traveling at <b>" + siteLabelFromSlug(t.site) + "</b><br>"
+      + "<b>Trip:</b> " + formatTravelRange(t.startDate, t.endDate);
+    actions.innerHTML =
+      '<button class="btn btn-blue" onclick="openTravelExtend()">EXTEND</button>'
+      + '<button class="btn btn-clear" style="background:var(--red); color:#fff;" onclick="openTravelEnd()">END TRAVELING</button>';
+  } else {
+    const sitesNote = sites.length > 1
+      ? sites.filter(s => s !== home).length + " other site(s) available in NetBox snapshot"
+      : "No other sites in the NetBox snapshot — run fetch_netbox.py with NETBOX_SITES=evi01,evi02 to add more";
+    status.innerHTML = "<b>Home site:</b> " + home + "<br><span style=\"opacity:0.75; font-size:12px;\">" + sitesNote + "</span>";
+    const disabled = sites.filter(s => s !== home).length === 0;
+    actions.innerHTML = '<button class="btn btn-blue" onclick="openTravelStart()"' + (disabled ? ' disabled title="No other sites in NetBox snapshot"' : '') + '>TRAVEL TO ANOTHER SITE</button>';
+  }
+  // History
+  const hist = getTravelingHistory();
+  if (!hist.length) {
+    histBox.innerHTML = '<span style="opacity:0.6;">No past trips yet.</span>';
+  } else {
+    histBox.innerHTML = hist.slice().reverse().slice(0, 8).map(h =>
+      "• <b>" + siteLabelFromSlug(h.site) + "</b> &nbsp; " + formatTravelRange(h.startDate, h.endDate || h.actualEndDate || "—")
+    ).join("<br>");
+  }
+}
+
+function openTravelStart() {
+  const sel = $("travelSiteSelect");
+  const home = getHomeSite();
+  // Build [label, slug] pairs for every site except home.
+  const otherLabels = listAvailableSites().filter(s => s !== home);
+  if (!otherLabels.length) {
+    toast("No other sites available. Run fetch_netbox.py with multiple sites first.", "error");
+    return;
+  }
+  sel.innerHTML = '<option value="" disabled selected>-- Choose a site --</option>'
+    + otherLabels.map(label => '<option value="' + siteSlugFromLabel(label) + '">' + label + '</option>').join("");
+  $("travelStartDate").value = todayIsoDate();
+  $("travelEndDate").value = isoPlusDays(todayIsoDate(), 7);
+  $("travelStartModal").classList.add("open");
+}
+function closeTravelStart() { $("travelStartModal").classList.remove("open"); }
+
+function confirmTravelStart() {
+  const siteSlug = $("travelSiteSelect").value;
+  const startDate = $("travelStartDate").value;
+  const endDate = $("travelEndDate").value;
+  if (!siteSlug) { toast("Choose a site to travel to.", "error"); return; }
+  if (!startDate) { toast("Start date is required.", "error"); return; }
+  if (endDate && endDate < startDate) { toast("End date must be on or after the start date.", "error"); return; }
+  setTravelingState({ site: siteSlug, startDate, endDate, beganAt: new Date().toISOString() });
+  closeTravelStart();
+  applyActiveSiteToUI();
+  refreshTravelingSettingsPanel();
+  toast("Now traveling at " + siteLabelFromSlug(siteSlug) + ".", "success");
+}
+
+function openTravelExtend() {
+  const t = getTravelingState(); if (!t) return;
+  $("travelExtendInfo").innerHTML = "<b>" + siteLabelFromSlug(t.site) + "</b> &nbsp; " + formatTravelRange(t.startDate, t.endDate);
+  $("travelExtendDate").value = t.endDate || isoPlusDays(todayIsoDate(), 7);
+  $("travelExtendModal").classList.add("open");
+}
+function closeTravelExtend() { $("travelExtendModal").classList.remove("open"); }
+
+function confirmTravelExtend() {
+  const t = getTravelingState(); if (!t) return;
+  const newEnd = $("travelExtendDate").value;
+  if (!newEnd) { toast("Pick a new end date.", "error"); return; }
+  if (newEnd < t.startDate) { toast("End date must be on or after the start date.", "error"); return; }
+  setTravelingState({ ...t, endDate: newEnd });
+  closeTravelExtend();
+  refreshTravelingSettingsPanel();
+  updateTravelingRibbon();
+  toast("Trip extended to " + newEnd + ".", "success");
+}
+
+function openTravelEnd() {
+  const t = getTravelingState(); if (!t) return;
+  $("travelEndInfo").innerHTML = "End your trip at <b>" + siteLabelFromSlug(t.site) + "</b>?<br>"
+    + "<span style=\"opacity:0.8;\">Trip: " + formatTravelRange(t.startDate, t.endDate) + "</span>";
+  $("travelEndModal").classList.add("open");
+}
+function closeTravelEnd() { $("travelEndModal").classList.remove("open"); }
+
+function confirmTravelEnd() {
+  const t = getTravelingState(); if (!t) return;
+  appendTravelingHistory({ ...t, actualEndDate: todayIsoDate(), endedAt: new Date().toISOString() });
+  setTravelingState(null);
+  closeTravelEnd();
+  applyActiveSiteToUI();
+  refreshTravelingSettingsPanel();
+  toast("Trip ended. Returned to " + getHomeSite() + ".", "success");
+}
+
+// Apply the active-site to every part of the form that lists locations or
+// defaults DC Code. Called on boot, on trip start, and on trip end.
+function applyActiveSiteToUI() {
+  refreshLocationOptions();
+  applyActiveSiteDcCodeDefaults();
+  updateTravelingRibbon();
+}
+
+// Rebuild every location selector (main form select + edit/recurring/walkthrough/escorting radio
+// groups) using locations from the active site. Includes the record's existing
+// location if it isn't in the active site's list so edits work cross-site.
+function refreshLocationOptions(extraIncludes) {
+  const include = new Set(listActiveSiteLocations());
+  if (extraIncludes) for (const v of extraIncludes) { if (v) include.add(v); }
+  const ordered = Array.from(include).sort((a, b) => {
+    const ma = a.match(/^DH(\d+)$/i);
+    const mb = b.match(/^DH(\d+)$/i);
+    if (ma && mb) return parseInt(ma[1], 10) - parseInt(mb[1], 10);
+    if (ma) return -1;
+    if (mb) return 1;
+    return a.localeCompare(b);
+  });
+
+  // 1. Main form <select>
+  const locSelect = $("locSelect");
+  if (locSelect) {
+    const current = locSelect.value;
+    locSelect.innerHTML = '<option value="" disabled' + (current ? '' : ' selected') + '>-- Select location --</option>'
+      + ordered.map(v => '<option value="' + escapeAttr(v) + '"' + (v === current ? ' selected' : '') + '>' + escapeHtml(v) + '</option>').join("")
+      + '<option value="Other"' + (current === "Other" ? ' selected' : '') + '>Others</option>';
+  }
+
+  // 2-5. Radio groups in edit / rule / walkthrough / escorting modals
+  rebuildLocationRadioGroup("editLocGroup", "editLocation", "editLocOther", ordered, true);
+  rebuildLocationRadioGroup(null, "ruleLocation", "ruleLocOther", ordered, true, "ruleLocGroup");
+  rebuildLocationRadioGroup(null, "walkthroughLocation", null, ordered, false, "walkthroughLocGroup");
+  rebuildLocationRadioGroup(null, "escortingLocation", null, ordered, false, "escortingLocGroup");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+function rebuildLocationRadioGroup(groupElId, radioName, otherInputId, locations, includeOther, fallbackGroupId) {
+  // Find the wrapper element. Some modals don't have a dedicated id on the
+  // group, so we look up by id first then fall back to the parent of the
+  // first radio with that name.
+  let wrap = groupElId ? document.getElementById(groupElId) : null;
+  if (!wrap && fallbackGroupId) wrap = document.getElementById(fallbackGroupId);
+  if (!wrap) {
+    const first = document.querySelector('input[name="' + radioName + '"]');
+    wrap = first ? first.closest(".radio-group") : null;
+  }
+  if (!wrap) return;
+  // Preserve currently-selected value before wiping markup.
+  const checked = wrap.querySelector('input[name="' + radioName + '"]:checked');
+  const currentVal = checked ? checked.value : null;
+  const otherInputVal = otherInputId && document.getElementById(otherInputId) ? document.getElementById(otherInputId).value : "";
+
+  const idPrefix = radioName.replace(/Location$/, "") + "-loc-";
+  const parts = locations.map(loc => {
+    const id = idPrefix + loc.replace(/[^A-Za-z0-9]/g, "");
+    return '<input type="radio" name="' + radioName + '" id="' + id + '" value="' + escapeAttr(loc) + '">'
+         + '<label for="' + id + '">' + escapeHtml(loc) + '</label>';
+  });
+  if (includeOther) {
+    const id = idPrefix + "Other";
+    parts.push('<input type="radio" name="' + radioName + '" id="' + id + '" value="Other"><label for="' + id + '">Others</label>');
+    if (otherInputId) {
+      parts.push('<input type="text" id="' + otherInputId + '" placeholder="Enter location..." style="width:140px; padding:6px 8px; font-size:13px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text); display:none;">');
+    }
+  }
+  wrap.innerHTML = parts.join("\n");
+
+  // Restore selection if still present.
+  if (currentVal) {
+    const restore = wrap.querySelector('input[name="' + radioName + '"][value="' + cssEscape(currentVal) + '"]');
+    if (restore) restore.checked = true;
+  }
+  if (otherInputId) {
+    const otherInp = document.getElementById(otherInputId);
+    if (otherInp) {
+      otherInp.value = otherInputVal;
+      const otherRadio = wrap.querySelector('input[name="' + radioName + '"][value="Other"]');
+      otherInp.style.display = (otherRadio && otherRadio.checked) ? "inline-block" : "none";
+    }
+    setupOtherToggle(radioName, otherInputId);
+  }
+  // Re-wire location change → repopulate rack/RU/node combos in edit modal
+  if (radioName === "editLocation") {
+    wrap.querySelectorAll('input[name="editLocation"]').forEach(r => {
+      r.addEventListener("change", () => {
+        if (r.checked) {
+          populateRackOptions("editRack", r.value, "");
+          populateRuOptions("editRu", r.value, "");
+          populateNodeOptions("editNode", r.value, "");
+        }
+      });
+    });
+  }
+}
+
+function cssEscape(s) {
+  if (window.CSS && window.CSS.escape) return CSS.escape(s);
+  return String(s).replace(/(["\\])/g, "\\$1");
+}
+
+function applyActiveSiteDcCodeDefaults() {
+  const site = getActiveSite();
+  // Update placeholders + default values of DC Code fields, but only if the
+  // field is empty or still shows the previous default. Don't clobber a value
+  // the user has explicitly typed.
+  const fields = [
+    { id: "dcCode" },
+    { id: "editDcCode" },
+    { id: "ruleDcCode" },
+  ];
+  for (const f of fields) {
+    const el = document.getElementById(f.id);
+    if (!el) continue;
+    el.placeholder = site;
+    if (!el.value || el.value === el.dataset._defaultSite) {
+      el.value = site;
+    }
+    el.dataset._defaultSite = site;
+  }
 }
 
 // Display rack names with an "R" prefix so they match the historical
@@ -2739,7 +3222,7 @@ async function saveEntry() {
   const desc = $("description").value.trim();
   if (!desc) { toast("Please enter a task description.", "error"); $("description").focus(); return; }
   const entryDate = $("entryDate").value;
-  const dcCode = $("dcCode").value.trim() || "EVI01";
+  const dcCode = $("dcCode").value.trim() || getActiveSite();
   const addInfo = $("addInfo").value.trim();
   const rackList = getRackList();
   const ruList = getRuList();
@@ -2808,7 +3291,7 @@ function clearForm() {
   $("description").value = "";
   $("acList").style.display = "none";
   $("addInfo").value = "";
-  $("dcCode").value = "EVI01";
+  $("dcCode").value = getActiveSite();
   $("locSelect").value = "";
   $("locOther").value = "";
   $("locOther").style.display = "none";
@@ -2840,19 +3323,22 @@ function editRecord(id) {
   if (!r) { toast("Could not load record.", "error"); return; }
   $("editId").value = r.id;
   $("editDate").value = r.entry_date;
-  $("editDcCode").value = r.dc_code || "EVI01";
+  $("editDcCode").value = r.dc_code || getActiveSite();
   $("editDescription").value = r.description || "";
   $("editAddInfo").value = r.add_info || "";
   const loc = r.location || "DH1";
-  const knownLocs = ["DH1","DH2","DH3","DH4","DH5","DH6","L3-Optics Cage"];
+  // Rebuild radio group from active-site locations + the record's location
+  // so cross-site records (e.g. an EVI02 entry viewed from home) still show.
+  refreshLocationOptions([loc]);
   let resolvedLoc = loc;
-  if (knownLocs.includes(loc)) {
-    const radio = document.querySelector('input[name="editLocation"][value="' + loc + '"]');
-    if (radio) radio.checked = true;
+  const radio = document.querySelector('input[name="editLocation"][value="' + cssEscape(loc) + '"]');
+  if (radio) {
+    radio.checked = true;
     $("editLocOther").style.display = "none";
     $("editLocOther").value = "";
   } else {
-    document.getElementById("edit-loc-Other").checked = true;
+    const otherRadio = document.querySelector('input[name="editLocation"][value="Other"]');
+    if (otherRadio) otherRadio.checked = true;
     $("editLocOther").style.display = "inline-block";
     $("editLocOther").value = loc;
     resolvedLoc = "Other";
@@ -3352,7 +3838,10 @@ function setTheme(name) {
 const savedTheme = localStorage.getItem("evi-theme") || "classic-blue";
 setTheme(savedTheme);
 
-function openSettings() { $("settingsModal").classList.add("open"); }
+function openSettings() {
+  refreshTravelingSettingsPanel();
+  $("settingsModal").classList.add("open");
+}
 function closeSettings() { $("settingsModal").classList.remove("open"); }
 
 // ── Search / Filter ──────────────────────────────
@@ -3639,6 +4128,9 @@ document.addEventListener("keydown", function(e) {
     else if ($("walkthroughModal").classList.contains("open")) closeWalkthrough();
     else if ($("escortingModal").classList.contains("open")) closeEscorting();
     else if ($("versionModal").classList.contains("open")) closeVersionHistory();
+    else if ($("travelStartModal").classList.contains("open")) closeTravelStart();
+    else if ($("travelExtendModal").classList.contains("open")) closeTravelExtend();
+    else if ($("travelEndModal").classList.contains("open")) closeTravelEnd();
     else if ($("settingsModal").classList.contains("open")) closeSettings();
     else if ($("exportModal").classList.contains("open")) closeExportPicker();
     else if ($("importModal").classList.contains("open")) closeImportPicker();
@@ -3659,8 +4151,19 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v2.1.3";
+const CURRENT_VERSION = "v2.2.0";
 const VERSION_HISTORY = [
+  { version: "v2.2.0", date: "2026-06-22", features: [
+      "Added Traveling Site feature in Settings — log work from another datacenter without losing your home (EVI01) data",
+      "Settings → Traveling Site shows current state. \"Travel to another site\" opens a dialog with a site picker (sites from netbox.json), start date, and end date",
+      "While traveling, the entry form's location dropdown, Rack/RU/Node selectors, and DC Code default all swap to the traveling site's NetBox layout (e.g. Sector 1 / Sector 2 / DH3 — whatever NetBox calls them at that site)",
+      "Orange ribbon at the top of the page shows the active trip and links back to Settings — click to manage",
+      "Extend button updates the trip end date; End Traveling asks for confirmation, then snaps the UI back to EVI01. Saved records from the trip are kept untouched",
+      "Trip history (last 8) shown in Settings so you can review where you've worked",
+      "fetch_netbox.py now accepts NETBOX_SITES=evi01,evi02,evi03 (comma list) and writes one combined netbox.json with all sites. Home site = first slug in the list",
+      "netbox.json is now written without pretty-print indentation, shrinking it ~40% on disk (gzipped page load was already tiny — this just keeps the git repo lean)",
+      "Backward-compatible: the previous single-site netbox.json shape still loads correctly"
+  ]},
   { version: "v2.1.3", date: "2026-06-17", features: [
       "Picking an RU now auto-fills the Node combo with the device(s) mounted at that U position in the selected rack(s) — e.g. selecting RU10 in R001 auto-picks dh1-con-a1-01-r001-us-central-07a",
       "Multi-RU works the same way: select RU10 + RU14 and the Node combo populates with both devices",
@@ -3979,7 +4482,10 @@ function closeRecurring() { $("recurringModal").classList.remove("open"); }
 
 function openWalkthrough() {
   $("walkthroughDate").value = localDateStr();
-  const dh1 = document.getElementById("wt-loc-DH1"); if (dh1) dh1.checked = true;
+  // Rebuild location radios from active-site locations, then check the first one.
+  refreshLocationOptions();
+  const first = document.querySelector('input[name="walkthroughLocation"]');
+  if (first) first.checked = true;
   const am = document.getElementById("wt-shift-AM"); if (am) am.checked = true;
   $("walkthroughModal").classList.add("open");
 }
@@ -3994,7 +4500,7 @@ function saveWalkthrough() {
   const shift = shiftEl ? shiftEl.value : "AM";
   const rowId = addTask(
     date, "Daily Walkthrough Completed", location,
-    "EVI01", shift, "", "", ""
+    getActiveSite(), shift, "", "", ""
   );
   toast("Walkthrough #" + rowId + " saved (" + location + " " + shift + ").", "success");
   setStatus("SAVED  Walkthrough #" + rowId + " — " + location + " " + shift);
@@ -4004,7 +4510,9 @@ function saveWalkthrough() {
 
 function openEscorting() {
   $("escortingDate").value = localDateStr();
-  const dh1 = document.getElementById("esc-loc-DH1"); if (dh1) dh1.checked = true;
+  refreshLocationOptions();
+  const first = document.querySelector('input[name="escortingLocation"]');
+  if (first) first.checked = true;
   $("escortingStart").value = "";
   $("escortingEnd").value = "";
   $("escortingCompany").value = "";
@@ -4063,7 +4571,7 @@ function saveEscorting() {
   if (info) addInfo += (addInfo ? " | " : "") + info;
   const rowId = addTask(
     date, "Escorting — " + company, location,
-    "EVI01", addInfo, "", "", ""
+    getActiveSite(), addInfo, "", "", ""
   );
   toast("Escorting #" + rowId + " saved (" + location + " · " + company + ").", "success");
   setStatus("SAVED  Escorting #" + rowId + " — " + location + " · " + company);
@@ -4103,12 +4611,14 @@ function renderRulesList() {
 
 function resetRuleForm() {
   $("ruleName").value = "";
-  $("ruleDcCode").value = "EVI01";
+  $("ruleDcCode").value = getActiveSite();
   $("ruleDescription").value = "";
   $("ruleAddInfo").value = "";
-  document.getElementById("rule-loc-DH1").checked = true;
-  $("ruleLocOther").style.display = "none";
-  $("ruleLocOther").value = "";
+  refreshLocationOptions();
+  const firstLoc = document.querySelector('input[name="ruleLocation"]');
+  if (firstLoc) firstLoc.checked = true;
+  const otherInp = $("ruleLocOther");
+  if (otherInp) { otherInp.style.display = "none"; otherInp.value = ""; }
   document.getElementById("ruleFreq-daily").checked = true;
   $("ruleStartDate").value = localDateStr();
   $("ruleEndDate").value = "";
@@ -4269,6 +4779,9 @@ document.addEventListener("click", function(e) {
   if (e.target.id === "escortingModal") closeEscorting();
   if (e.target.id === "versionModal") closeVersionHistory();
   if (e.target.id === "settingsModal") closeSettings();
+  if (e.target.id === "travelStartModal") closeTravelStart();
+  if (e.target.id === "travelExtendModal") closeTravelExtend();
+  if (e.target.id === "travelEndModal") closeTravelEnd();
   if (e.target.id === "exportModal") closeExportPicker();
   if (e.target.id === "importModal") closeImportPicker();
   if (e.target.id === "attPreviewModal") closeAttPreview();

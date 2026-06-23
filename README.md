@@ -29,6 +29,20 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.2.0 (2026-06-22)
+**Traveling Site — log work from a non-home datacenter:**
+- New **Traveling Site** section in Settings. Press **TRAVEL TO ANOTHER SITE** to pick a site (from `netbox.json`), set start + end dates, and start a trip.
+- While traveling, the entry form's **Location dropdown**, **Rack/RU/Node** selectors, and **DC Code** default all swap to the traveling site's NetBox layout (Sector 1 / Sector 2 / DH3 — whatever NetBox calls them).
+- Orange ribbon at the top of the page shows the active trip — click it to jump back into Settings.
+- **EXTEND** updates the trip end date; **END TRAVELING** asks for confirmation, then snaps the UI back to EVI01. **Records logged during the trip are kept** — only the active state is cleared.
+- Trip history (last 8) is shown in Settings.
+
+**fetch_netbox.py — multi-site fetch:**
+- Set `NETBOX_SITES=evi01,evi02,evi03` (comma list) to fetch multiple sites into one combined `netbox.json`. Home site = first slug in the list.
+- The single-site `NETBOX_SITE=evi01` env var still works (fallback when `NETBOX_SITES` is unset).
+- Output JSON is now written without pretty-print indentation, shrinking it ~40% on disk (gzipped page load was already tiny — this just keeps the git repo lean).
+- The UI is backward-compatible with the previous single-site `netbox.json` shape.
+
 ### v2.1.3 (2026-06-17)
 **RU → Node auto-select:**
 - Picking an **RU** now auto-fills the **Node** combo with the device(s) at that U position in the selected rack(s). E.g. selecting `RU10` in `R001` auto-picks `dh1-con-a1-01-r001-us-central-07a`.
