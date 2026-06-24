@@ -1333,7 +1333,7 @@
       </div>
       <div class="btn-row">
         <button id="saveEntryBtn" class="btn btn-save" onclick="saveEntry()" disabled title="Choose a location to enable">SAVE ENTRY <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>S</kbd></span></button>
-        <span id="saveCountBadge" style="display:none; padding:6px 12px; background:var(--orange); color:#fff; font-weight:600; font-size:13px; border-radius:4px; align-self:center;" title="Number of records this save will create (rack × RU × node selections)"></span>
+        <span id="saveCountBadge" style="display:none; padding:6px 12px; background:var(--orange); color:#fff; font-weight:600; font-size:13px; border-radius:4px; align-self:center;" title="Rack/RU/Node multi-selections combine into ONE record with comma-separated values"></span>
         <button class="btn btn-clear" onclick="clearForm()">CLEAR FORM</button>
         <span class="divider-v"></span>
         <button class="btn btn-blue" onclick="openRecurring()">RECURRING</button>
@@ -3056,7 +3056,11 @@ function applyActiveSiteDcCodeDefaults() {
     const el = document.getElementById(f.id);
     if (!el) continue;
     el.placeholder = site;
-    if (!el.value || el.value === el.dataset._defaultSite) {
+    // Treat an unset _defaultSite as the hardcoded HTML default (HOME_SITE_DEFAULT),
+    // so the first call when traveling actually overwrites the static "EVI01"
+    // baked into the markup instead of leaving it stale.
+    const prevDefault = el.dataset._defaultSite || HOME_SITE_DEFAULT;
+    if (!el.value || el.value === prevDefault) {
       el.value = site;
     }
     el.dataset._defaultSite = site;
@@ -3183,19 +3187,21 @@ function updateSaveEntryDisabled() {
   updateSaveCountBadge();
 }
 
-// Show how many records THIS save will create based on current rack/RU/node
-// multi-selections (cartesian product). Visible only when count > 1, so a
-// surprise multi-save (e.g. RU auto-selected several devices) is obvious
-// before clicking SAVE.
+// Surface what the current multi-selection will get rolled into a single
+// record (e.g. 5 racks + 3 RUs → one row, comma-separated). Visible only
+// when at least one combo has more than one selection.
 function updateSaveCountBadge() {
   const badge = $("saveCountBadge");
   if (!badge) return;
-  const racks = (typeof getRackList === "function" ? getRackList() : []).length || 1;
-  const rus   = (typeof getRuList   === "function" ? getRuList()   : []).length || 1;
-  const nodes = (typeof getNodeList === "function" ? getNodeList() : []).length || 1;
-  const n = racks * rus * nodes;
-  if (n > 1) {
-    badge.textContent = "WILL SAVE " + n + " ENTRIES (" + racks + " rack × " + rus + " RU × " + nodes + " node)";
+  const racks = (typeof getRackList === "function" ? getRackList() : []).length;
+  const rus   = (typeof getRuList   === "function" ? getRuList()   : []).length;
+  const nodes = (typeof getNodeList === "function" ? getNodeList() : []).length;
+  const parts = [];
+  if (racks > 1) parts.push(racks + " racks");
+  if (rus > 1)   parts.push(rus + " RUs");
+  if (nodes > 1) parts.push(nodes + " nodes");
+  if (parts.length) {
+    badge.textContent = "COMBINING " + parts.join(" + ") + " INTO 1 ENTRY";
     badge.style.display = "inline-block";
   } else {
     badge.style.display = "none";
@@ -3260,30 +3266,22 @@ async function saveEntry() {
   const rackList = getRackList();
   const ruList = getRuList();
   const nodeList = getNodeList();
-  const racks = rackList.length ? rackList : [""];
-  const rus = ruList.length ? ruList : [""];
-  const nodes = nodeList.length ? nodeList : [""];
-  const rowIds = [];
-  for (const rack of racks) {
-    for (const ru of rus) {
-      for (const node of nodes) {
-        rowIds.push(addTask(entryDate, desc, loc, dcCode, addInfo, rack, ru, node));
-      }
-    }
-  }
+  // Multi-selections collapse into ONE record with comma-separated values
+  // (was a cartesian fan-out — created N×M×K rows that the user almost never
+  // actually wanted, see v2.3.0 changelog).
+  const rack = rackList.join(", ");
+  const ru = ruList.join(", ");
+  const node = nodeList.join(", ");
+  const rowId = addTask(entryDate, desc, loc, dcCode, addInfo, rack, ru, node);
   if (stagedAdd.length) {
-    for (const rid of rowIds) await persistStaged(rid, stagedAdd);
+    await persistStaged(rowId, stagedAdd);
     await refreshAttachmentsCache();
   }
   const n = stagedAdd.length;
   stagedAdd = [];
   renderStagedList("add");
-  const multi = rowIds.length > 1;
-  const summary = multi
-    ? rowIds.length + " entries saved (#" + rowIds[0] + "-#" + rowIds[rowIds.length-1] + ")"
-    : "Entry #" + rowIds[0] + " saved";
-  toast(summary + (n ? " with " + n + " file(s)" : "") + "!", "success");
-  setStatus(multi ? "SAVED  " + rowIds.length + " records" : "SAVED  Record #" + rowIds[0]);
+  toast("Entry #" + rowId + " saved" + (n ? " with " + n + " file(s)" : "") + "!", "success");
+  setStatus("SAVED  Record #" + rowId);
   clearForm();
   refreshActiveTab();
 }
@@ -4223,8 +4221,13 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v2.2.1";
+const CURRENT_VERSION = "v2.3.0";
 const VERSION_HISTORY = [
+  { version: "v2.3.0", date: "2026-06-23", features: [
+      "Multi-rack / multi-RU / multi-node selections now collapse into ONE record with comma-separated values (was a cartesian fan-out — picking 5 racks × 3 RUs created 15 duplicate rows that almost nobody actually wanted)",
+      "Save badge updated: instead of \"WILL SAVE 15 ENTRIES\" it now reads \"COMBINING 5 racks + 3 RUs INTO 1 ENTRY\", so you can see exactly what's getting bundled before clicking SAVE",
+      "Fixed DC Code field staying stuck on \"EVI01\" when starting a trip — the hardcoded HTML default is now correctly overwritten with the traveling site code (e.g. US-CDZ01) on first load"
+  ]},
   { version: "v2.2.1", date: "2026-06-23", features: [
       "Added live \"WILL SAVE N ENTRIES\" badge next to SAVE ENTRY — visible only when Rack × RU × Node multi-selection would create more than one record. Surfaces accidental multi-saves (e.g. selecting an RU whose position has several stacked devices) BEFORE clicking SAVE",
       "Badge reads e.g. \"WILL SAVE 5 ENTRIES (1 rack × 1 RU × 5 node)\" — the breakdown shows which combo is fanning out so you can prune the multi-select",

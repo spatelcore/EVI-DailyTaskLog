@@ -29,6 +29,12 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.3.0 (2026-06-23)
+**Multi-select now combines into one record + DC Code traveling fix:**
+- Multi-**rack** / multi-**RU** / multi-**node** selections now collapse into **one record** with comma-separated values. Previously the save loop did a cartesian fan-out — picking 5 racks × 3 RUs created **15** duplicate rows. Now it creates **1**.
+- Save badge updated: instead of `WILL SAVE 15 ENTRIES`, it now reads `COMBINING 5 racks + 3 RUs INTO 1 ENTRY` so you can see exactly what's getting bundled before clicking **SAVE**.
+- Fixed **DC Code** field staying stuck on `EVI01` after starting a trip. The hardcoded HTML default is now correctly overwritten with the traveling site code (e.g. `US-CDZ01`) on first load.
+
 ### v2.2.1 (2026-06-23)
 **Visibility for multi-saves + cleanup tool:**
 - New **WILL SAVE N ENTRIES** badge appears next to **SAVE ENTRY** whenever the current Rack × RU × Node multi-selection would create more than one record. Breakdown reads `1 rack × 1 RU × 5 node = 5 entries` so you can see which combo is fanning out.
