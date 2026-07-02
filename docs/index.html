@@ -123,6 +123,18 @@
                                     box-shadow:0 0 6px rgba(0,0,0,0.15); }
   .theme-name { font-size:13px; font-weight:bold; color:var(--text); }
 
+  .settings-option-row { display:flex; gap:12px; }
+  .settings-option-card { flex:1; display:flex; flex-direction:column; align-items:center;
+                           text-align:center; gap:6px; padding:20px 12px;
+                           border:2px solid var(--input-border); border-radius:8px;
+                           background:var(--card-bg); cursor:pointer;
+                           transition:border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+  .settings-option-card:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:var(--shadow-2); }
+  .settings-option-card.settings-option-danger:hover { border-color:var(--red); }
+  .settings-option-icon { font-size:26px; line-height:1; }
+  .settings-option-name { font-size:13px; font-weight:bold; color:var(--text); letter-spacing:0.3px; }
+  .settings-option-sub { font-size:11px; color:var(--text); opacity:0.65; }
+
   .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
 
   .form-section { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -1230,6 +1242,11 @@
     .stat-card { flex: 1 1 100%; }
     .modal-actions .btn { flex: 1 1 100%; }
     .view-tab { padding: 9px 10px; font-size: 12px; }
+
+    .settings-option-card { padding: 12px 6px; gap: 4px; }
+    .settings-option-icon { font-size: 20px; }
+    .settings-option-name { font-size: 10px; }
+    .settings-option-sub { display: none; }
   }
 </style>
 </head>
@@ -1242,7 +1259,7 @@
   </button>
 </div>
 
-<div id="travelingRibbon" style="display:none; background:var(--orange); color:#fff; text-align:center; padding:6px 16px; font-size:13px; font-weight:600; letter-spacing:0.3px; cursor:pointer;" onclick="openSettings()" title="Click to manage your trip in Settings"></div>
+<div id="travelingRibbon" style="display:none; background:var(--orange); color:#fff; text-align:center; padding:6px 16px; font-size:13px; font-weight:600; letter-spacing:0.3px; cursor:pointer;" onclick="openSettingsTravel()" title="Click to manage your trip in Settings"></div>
 
 <div class="container">
   <div class="form-section">
@@ -1534,8 +1551,39 @@
       <button class="modal-close" onclick="closeSettings()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="settings-section" id="travelingSection">
-        <h3>Traveling Site</h3>
+      <div class="settings-option-row">
+        <div class="settings-option-card" onclick="openSettingsTravel()">
+          <div class="settings-option-icon">🧳</div>
+          <div class="settings-option-name">Traveling Site</div>
+          <div class="settings-option-sub" id="settingsCardTravelStatus"></div>
+        </div>
+        <div class="settings-option-card" onclick="openSettingsTheme()">
+          <div class="settings-option-icon">🎨</div>
+          <div class="settings-option-name">Theme</div>
+          <div class="settings-option-sub" id="settingsCardThemeStatus"></div>
+        </div>
+        <div class="settings-option-card settings-option-danger" onclick="openSettingsDanger()">
+          <div class="settings-option-icon">⚠️</div>
+          <div class="settings-option-name">Danger Zone</div>
+          <div class="settings-option-sub">Purge by date</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-clear" onclick="closeSettings()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings: Traveling Site Modal -->
+<div class="modal-overlay" id="settingsTravelModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2>TRAVELING SITE</h2>
+      <button class="modal-close" onclick="closeSettingsTravel()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section" id="travelingSection" style="margin-bottom:0;">
         <div id="travelingStatus" style="padding:12px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; margin-bottom:10px; font-size:14px; line-height:1.5;"></div>
         <div id="travelingActions" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;"></div>
         <div id="travelingHistoryWrap" style="margin-top:14px;">
@@ -1543,9 +1591,22 @@
           <div id="travelingHistory" style="font-size:12px; color:var(--text); opacity:0.85;"></div>
         </div>
       </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-clear" onclick="closeSettingsTravel()">BACK</button>
+    </div>
+  </div>
+</div>
 
-      <div class="settings-section">
-        <h3>Theme</h3>
+<!-- Settings: Theme Modal -->
+<div class="modal-overlay" id="settingsThemeModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2>THEME</h2>
+      <button class="modal-close" onclick="closeSettingsTheme()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section" style="margin-bottom:0;">
         <div class="theme-grid" id="themeGrid">
           <div class="theme-option" data-theme="classic-blue" onclick="setTheme('classic-blue')">
             <div class="theme-dot" style="background:linear-gradient(135deg,#1F3864,#2E75B6);"></div>
@@ -1581,9 +1642,23 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-clear" onclick="closeSettingsTheme()">BACK</button>
+    </div>
+  </div>
+</div>
 
-      <div class="settings-section" style="border-top:1px solid var(--border-col); padding-top:14px; margin-top:18px;">
-        <h3 style="color:var(--red);">Danger Zone — Purge by Date</h3>
+<!-- Settings: Danger Zone Modal -->
+<div class="modal-overlay" id="settingsDangerModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2>DANGER ZONE</h2>
+      <button class="modal-close" onclick="closeSettingsDanger()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section" style="margin-bottom:0;">
+        <h3 style="color:var(--red);">Purge by Date</h3>
         <div style="font-size:13px; color:var(--text); opacity:0.8; margin-bottom:10px;">Delete every log entry for a specific date. Use this to clean up accidental duplicates. <b>Cannot be undone.</b></div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <input type="date" id="purgeDateInput" oninput="updatePurgePreview()" style="padding:8px 10px; font-size:14px; border:1px solid var(--input-border); border-radius:4px; background:var(--input-bg); color:var(--text);">
@@ -1593,7 +1668,7 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-clear" onclick="closeSettings()">CLOSE</button>
+      <button class="btn btn-clear" onclick="closeSettingsDanger()">BACK</button>
     </div>
   </div>
 </div>
@@ -3870,14 +3945,51 @@ const savedTheme = localStorage.getItem("evi-theme") || "classic-blue";
 setTheme(savedTheme);
 
 function openSettings() {
+  const travelSub = $("settingsCardTravelStatus");
+  if (travelSub) {
+    const t = getTravelingState();
+    travelSub.textContent = t ? "Traveling — " + siteLabelFromSlug(t.site) : "Home: " + getHomeSite();
+  }
+  const themeSub = $("settingsCardThemeStatus");
+  if (themeSub) {
+    const activeName = document.querySelector(".theme-option.active .theme-name");
+    themeSub.textContent = activeName ? activeName.textContent : "";
+  }
+  $("settingsModal").classList.add("open");
+}
+function closeSettings() { $("settingsModal").classList.remove("open"); }
+
+function openSettingsTravel() {
+  closeSettings();
   refreshTravelingSettingsPanel();
+  $("settingsTravelModal").classList.add("open");
+}
+function closeSettingsTravel() {
+  $("settingsTravelModal").classList.remove("open");
+  openSettings();
+}
+
+function openSettingsTheme() {
+  closeSettings();
+  $("settingsThemeModal").classList.add("open");
+}
+function closeSettingsTheme() {
+  $("settingsThemeModal").classList.remove("open");
+  openSettings();
+}
+
+function openSettingsDanger() {
+  closeSettings();
   const purgeInp = $("purgeDateInput");
   if (purgeInp) { purgeInp.value = ""; }
   const prev = $("purgePreview");
   if (prev) prev.innerHTML = "";
-  $("settingsModal").classList.add("open");
+  $("settingsDangerModal").classList.add("open");
 }
-function closeSettings() { $("settingsModal").classList.remove("open"); }
+function closeSettingsDanger() {
+  $("settingsDangerModal").classList.remove("open");
+  openSettings();
+}
 
 function updatePurgePreview() {
   const date = $("purgeDateInput").value;
@@ -4201,6 +4313,9 @@ document.addEventListener("keydown", function(e) {
     else if ($("travelStartModal").classList.contains("open")) closeTravelStart();
     else if ($("travelExtendModal").classList.contains("open")) closeTravelExtend();
     else if ($("travelEndModal").classList.contains("open")) closeTravelEnd();
+    else if ($("settingsTravelModal").classList.contains("open")) closeSettingsTravel();
+    else if ($("settingsThemeModal").classList.contains("open")) closeSettingsTheme();
+    else if ($("settingsDangerModal").classList.contains("open")) closeSettingsDanger();
     else if ($("settingsModal").classList.contains("open")) closeSettings();
     else if ($("exportModal").classList.contains("open")) closeExportPicker();
     else if ($("importModal").classList.contains("open")) closeImportPicker();
@@ -4221,8 +4336,12 @@ document.addEventListener("keydown", function(e) {
 // ══════════════════════════════════════════════════
 // Version History
 // ══════════════════════════════════════════════════
-const CURRENT_VERSION = "v2.3.0";
+const CURRENT_VERSION = "v2.3.1";
 const VERSION_HISTORY = [
+  { version: "v2.3.1", date: "2026-07-01", features: [
+      "Redesigned Settings — Traveling Site, Theme, and Danger Zone are now three cards in a single row instead of a long stacked page; clicking a card opens a dedicated dialog with that section's full controls",
+      "Settings cards show a live subtitle (current home/traveling site, active theme name) so you don't have to open a dialog just to check status"
+  ]},
   { version: "v2.3.0", date: "2026-06-23", features: [
       "Multi-rack / multi-RU / multi-node selections now collapse into ONE record with comma-separated values (was a cartesian fan-out — picking 5 racks × 3 RUs created 15 duplicate rows that almost nobody actually wanted)",
       "Save badge updated: instead of \"WILL SAVE 15 ENTRIES\" it now reads \"COMBINING 5 racks + 3 RUs INTO 1 ENTRY\", so you can see exactly what's getting bundled before clicking SAVE",
@@ -4859,6 +4978,9 @@ document.addEventListener("click", function(e) {
   if (e.target.id === "escortingModal") closeEscorting();
   if (e.target.id === "versionModal") closeVersionHistory();
   if (e.target.id === "settingsModal") closeSettings();
+  if (e.target.id === "settingsTravelModal") closeSettingsTravel();
+  if (e.target.id === "settingsThemeModal") closeSettingsTheme();
+  if (e.target.id === "settingsDangerModal") closeSettingsDanger();
   if (e.target.id === "travelStartModal") closeTravelStart();
   if (e.target.id === "travelExtendModal") closeTravelExtend();
   if (e.target.id === "travelEndModal") closeTravelEnd();

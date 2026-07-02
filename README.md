@@ -29,6 +29,13 @@ Format: **vX.Y.Z**
 
 ## Version History
 
+### v2.3.1 (2026-07-01)
+**Settings redesign — three cards, one line, dedicated dialogs:**
+- Settings now opens to three cards in a single row — **Traveling Site**, **Theme**, **Danger Zone** — instead of one long stacked page.
+- Clicking a card opens a dedicated dialog with that section's full controls; a **BACK** button (or Esc) returns to the card row.
+- Each card shows a live subtitle (current home/traveling site, active theme name) so status is visible without opening a dialog.
+- The orange "traveling" ribbon now jumps straight to the Traveling Site dialog instead of the card row.
+
 ### v2.3.0 (2026-06-23)
 **Multi-select now combines into one record + DC Code traveling fix:**
 - Multi-**rack** / multi-**RU** / multi-**node** selections now collapse into **one record** with comma-separated values. Previously the save loop did a cartesian fan-out — picking 5 racks × 3 RUs created **15** duplicate rows. Now it creates **1**.
